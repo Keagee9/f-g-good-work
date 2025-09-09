@@ -49,7 +49,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'crochet-braids',
     name: 'Crochet Braids',
-    image: 'https://picsum.photos/600/400?random=8',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/crochet.png',
     variants: [
       { id: 'crochet', name: 'Crochet Braids', duration: '2 hours', price: 150.0, description: 'Hair is not included' },
     ],
