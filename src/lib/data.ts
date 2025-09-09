@@ -11,15 +11,6 @@ export const services: Service[] = [
     image: 'https://picsum.photos/600/400?random=1',
   },
   {
-    id: 'knotless-braids',
-    name: 'Knotless Braids',
-    description:
-      'Enjoy a lighter, tension-free braiding experience that protects your natural hair while looking fabulous.',
-    duration: '4 hours',
-    price: 200.0,
-    image: 'https://picsum.photos/600/400?random=2',
-  },
-  {
     id: 'bohemian-braids',
     name: 'Bohemian Braids',
     description:
@@ -37,7 +28,7 @@ export const services: Service[] = [
     price: 180.0,
     image: 'https://picsum.photos/600/400?random=4',
   },
-    {
+  {
     id: 'butterfly-locs',
     name: 'Butterfly Locs',
     description:
@@ -56,6 +47,71 @@ export const services: Service[] = [
     image: 'https://picsum.photos/600/400?random=8',
   },
   {
+    id: 'fulani-ponytail',
+    name: 'Fulani Ponytail',
+    description: 'A stylish high ponytail combined with classic Fulani braid patterns for a chic look.',
+    duration: '2 hours 30 mins',
+    price: 140.0,
+    image: 'https://picsum.photos/600/400?random=9',
+  },
+  {
+    id: 'fulani-braid',
+    name: 'Fulani Braid',
+    description: 'Traditional Fulani-style braids, often adorned with beads, for a culturally rich and beautiful look.',
+    duration: '4 hours',
+    price: 190.0,
+    image: 'https://picsum.photos/600/400?random=10',
+  },
+  {
+    id: 'goddess-braids',
+    name: 'Goddess Braids',
+    description: 'Thick, beautiful cornrows braided into an elegant updo or left down for a regal appearance.',
+    duration: '3 hours 30 mins',
+    price: 160.0,
+    image: 'https://picsum.photos/600/400?random=11',
+  },
+  {
+    id: 'individual-crochet-locs',
+    name: 'Individual Crochet Locs',
+    description: 'Faux locs installed individually with a crochet needle for a more natural look and feel.',
+    duration: '4 hours',
+    price: 210.0,
+    image: 'https://picsum.photos/600/400?random=12',
+  },
+  {
+    id: 'knotless-braids',
+    name: 'Knotless Braids',
+    description:
+      'Enjoy a lighter, tension-free braiding experience that protects your natural hair while looking fabulous.',
+    duration: '4 hours',
+    price: 200.0,
+    image: 'https://picsum.photos/600/400?random=2',
+  },
+  {
+    id: 'passion-twists',
+    name: 'Passion Twists',
+    description: 'Bohemian-style twists that are lightweight, juicy, and full of texture for a stunning, carefree look.',
+    duration: '4 hours',
+    price: 180.0,
+    image: 'https://picsum.photos/600/400?random=13',
+  },
+  {
+    id: 'senegalese-twist',
+    name: 'Senegalese Twist',
+    description: 'Sleek, rope-like twists that offer a chic and polished protective style.',
+    duration: '4 hours 30 mins',
+    price: 190.0,
+    image: 'https://picsum.photos/600/400?random=14',
+  },
+  {
+    id: 'sew-in',
+    name: 'Sew-In',
+    description: 'A traditional method of adding extensions by sewing wefts of hair onto braided-down natural hair.',
+    duration: '3 hours',
+    price: 200.0,
+    image: 'https://picsum.photos/600/400?random=15',
+  },
+  {
     id: 'stitch-braids',
     name: 'Stitch Braids',
     description:
@@ -65,13 +121,20 @@ export const services: Service[] = [
     image: 'https://picsum.photos/600/400?random=5',
   },
   {
-    id: 'cornrows',
-    name: 'Cornrows',
-    description:
-      'A traditional and durable braided style, done close to the scalp for a sleek and lasting appearance.',
+    id: 'touch-up',
+    name: 'Touch up',
+    description: 'Refresh your existing style by re-doing the perimeter and partings to extend the life of your braids or twists.',
     duration: '1 hour 30 mins',
-    price: 80.0,
-    image: 'https://picsum.photos/600/400?random=6',
+    price: 75.0,
+    image: 'https://picsum.photos/600/400?random=16',
+  },
+  {
+    id: 'wig-install',
+    name: 'Wig Install',
+    description: 'Professional installation of your wig, including braid down, bald cap method, and styling.',
+    duration: '2 hours',
+    price: 100.0,
+    image: 'https://picsum.photos/600/400?random=17',
   },
 ];
 
