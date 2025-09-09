@@ -55,9 +55,9 @@ export const serviceCategories: ServiceCategory[] = [
     ],
   },
   {
-    id: 'feed-in-ponytail',
-    name: 'Feed In Ponytail',
-    image: 'https://picsum.photos/600/400?random=9',
+    id: 'fulani-ponytail',
+    name: 'Fulani Ponytail',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/fulani-ponytail.png',
     variants: [
         { id: 'pony-xs', name: 'PonyTail Feed in Braids Extra small', duration: '5 hours 30 minutes', price: 350.0, description: 'hair is included' },
         { id: 'pony-s', name: 'PonyTail Feed in Braids small', duration: '5 hours', price: 350.0, description: 'Hair is Included' },
