@@ -14,7 +14,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'bohemian-braids',
     name: 'Bohemian Braids',
-    image: 'https://picsum.photos/600/400?random=3',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/boham.png',
     variants: [
       { id: 'bohemian-s', name: 'Bohemian Knotless Braids, Small Size.', duration: '5 hours', price: 350.0, description: 'Hair is Included' },
       { id: 'bohemian-m', name: 'Bohemian Knotless Braids, Medium Size.', duration: '4 hours', price: 280.0, description: 'Hair is Included' },
