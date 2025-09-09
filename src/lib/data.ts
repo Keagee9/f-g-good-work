@@ -4,7 +4,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'bob-braids',
     name: 'Bob Braids',
-    image: 'https://picsum.photos/600/400?random=1',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/bob.png',
     variants: [
       { id: 'bob-s', name: 'Bob Braids Small size', duration: '5 hours', price: 350.0, description: 'hair included' },
       { id: 'bob-m', name: 'Bob Braids Medium size', duration: '4 hours', price: 300.0, description: 'hair included.' },
