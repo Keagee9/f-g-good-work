@@ -18,6 +18,8 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock,
+  Copy,
+  CreditCard,
   DollarSign,
   Home,
   PartyPopper,
@@ -31,6 +33,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 interface BookingFlowProps {
   serviceCategories: ServiceCategory[];
@@ -39,7 +42,7 @@ interface BookingFlowProps {
 
 export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const [step, setStep] = useState<
-    'policy' | 'service' | 'addons' | 'date' | 'confirmation'
+    'policy' | 'service' | 'addons' | 'date' | 'payment' | 'confirmation'
   >('policy');
   const [selectedVariant, setSelectedVariant] = useState<ServiceVariant | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
@@ -48,6 +51,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
     undefined
   );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
     setSelectedVariant(variant);
@@ -72,7 +76,15 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
-    setStep('confirmation');
+    setStep('payment');
+  };
+
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Copied to clipboard!',
+      description: `${text} has been copied.`,
+    });
   };
 
   const resetFlow = () => {
@@ -325,7 +337,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
               <CardHeader>
                 <CardTitle className="font-headline flex items-center text-primary">
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
-                  Select a Date & Time
+                  Select a Date &amp; Time
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col md:flex-row gap-8">
@@ -334,10 +346,11 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
-                    disabled={(date) => 
-                        date < new Date(new Date().setDate(new Date().getDate() - 1)) || 
-                        date.getDay() === 0 
-                    }
+                    disabled={(date) => {
+                      const yesterday = new Date();
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      return date < yesterday || date.getDay() === 0;
+                    }}
                     className="rounded-md border"
                   />
                 </div>
@@ -368,6 +381,74 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             </Card>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  const renderPaymentInstructions = () => {
+    const zelleNumber = '(323) 471-8770';
+    return (
+      <div className="container py-12 flex justify-center items-center">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <Button
+              variant="ghost"
+              onClick={() => setStep('date')}
+              className="self-start"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Date Selection
+            </Button>
+            <CardTitle className="text-3xl font-headline text-primary text-center pt-4">
+              Payment Instructions - Zelle Only
+            </CardTitle>
+            <CardDescription className="text-center text-muted-foreground">
+              Send Your Deposit via Zelle to confirm your appointment.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="border rounded-lg p-6 space-y-4 text-center bg-card">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Zelle Account Name
+                </p>
+                <p className="text-xl font-semibold text-primary">
+                  Goodness Abengowe
+                </p>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Account Number
+                </p>
+                <div className="flex items-center justify-center gap-4">
+                  <p className="text-2xl font-bold font-mono tracking-wider text-primary">
+                    {zelleNumber}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleCopyToClipboard(zelleNumber)}
+                  >
+                    <Copy className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground text-center italic">
+              A 25% deposit is required to secure your booking. This will be applied to your total service cost.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <Button
+              onClick={() => setStep('confirmation')}
+              className="w-full"
+              size="lg"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              I've Sent The Deposit, Confirm My Booking
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   };
@@ -433,6 +514,8 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   switch (step) {
     case 'confirmation':
       return renderConfirmation();
+    case 'payment':
+      return renderPaymentInstructions();
     case 'date':
       return renderDateTimeSelection();
     case 'addons':
@@ -444,3 +527,5 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
       return renderPolicy();
   }
 }
+
+    
