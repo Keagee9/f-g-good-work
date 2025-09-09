@@ -95,7 +95,7 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
             <AccordionTrigger className="text-xl font-headline text-primary hover:no-underline">
                 <div className="flex items-center gap-4">
                     <div className="relative w-24 h-24 rounded-md overflow-hidden">
-                        <Image src={category.image} alt={category.name} fill style={{objectFit: 'cover'}} data-ai-hint={category.name} />
+                        <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
                     </div>
                     {category.name}
                 </div>
@@ -147,7 +147,7 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
                     src={selectedCategory.image}
                     alt={selectedCategory.name}
                     fill
-                    style={{ objectFit: 'cover' }}
+                    style={{ objectFit: 'contain' }}
                     data-ai-hint={`${selectedCategory.name}`}
                   />
                 </div>

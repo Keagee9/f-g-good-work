@@ -92,7 +92,7 @@ export default function Home() {
                       src={category.image}
                       alt={category.name}
                       fill
-                      style={{ objectFit: 'cover' }}
+                      style={{ objectFit: 'contain' }}
                       data-ai-hint={category.name}
                     />
                   </div>
