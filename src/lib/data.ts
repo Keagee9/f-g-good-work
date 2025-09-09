@@ -85,7 +85,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'individual-crochet-locs',
     name: 'Individual crochet locs',
-    image: 'https://picsum.photos/600/400?random=12',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/individual.png',
     variants: [
       { id: 'ind-crochet', name: 'Individual Crochets Locks', duration: '4 hours', price: 280.0, description: 'Hair is not incuded' },
     ],
