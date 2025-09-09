@@ -93,7 +93,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'knotless-braids',
     name: 'Knotless Braids',
-    image: 'https://picsum.photos/600/400?random=2',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47890017.jpeg?1695345740',
     variants: [
         { id: 'french-braids', name: 'French braids', duration: '6 hours', price: 500.0, description: 'Hair is included' },
         { id: 'knotless-s', name: 'Knotless braids small size', duration: '5 hours', price: 350.0, description: 'Hair is included.' },
