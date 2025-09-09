@@ -17,7 +17,6 @@ import Image from 'next/image';
 import {
   ArrowLeft,
   CalendarDays,
-  Checkbox,
   Clock,
   DollarSign,
   Home,
@@ -25,6 +24,7 @@ import {
   Plus,
   Wand2,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { availableTimes } from '@/lib/data';
 import { StyleSuggestor } from './style-suggestor';
 import { Badge } from './ui/badge';
