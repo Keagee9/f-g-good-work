@@ -77,7 +77,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'goddess-braids',
     name: 'Goddess Braids',
-    image: 'https://picsum.photos/600/400?random=11',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/goddess.png',
     variants: [
       { id: 'goddess-2', name: 'Goddes Braids (2Braids)', duration: '1 hour', price: 70.0, description: 'hair is included' },
     ],
