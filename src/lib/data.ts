@@ -115,7 +115,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'senegalese-twist',
     name: 'Senegalese Twist',
-    image: 'https://picsum.photos/600/400?random=14',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/senegalese.png',
     variants: [
         { id: 'island-m', name: 'Island twist medium size', duration: '5 hours', price: 300.0, description: 'Hair is included, if you want human hair for the bohemian is $100 extra or you can bring your own hair.' },
         { id: 'island-s', name: 'Island twist small size', duration: '6 hours', price: 400.0, description: 'Hair is included, if you want human hair for the bohemian is $100 extra or you can bring your own hair.' },
