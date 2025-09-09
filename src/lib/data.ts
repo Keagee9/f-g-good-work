@@ -68,7 +68,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'fulani-braid',
     name: 'Fulani Braid',
-    image: 'https://picsum.photos/600/400?random=10',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47891788.jpeg?1695332411',
     variants: [
       { id: 'fulani-m', name: 'Tribe Braids (Fulani braids) medium size', duration: '4 hours 30 minutes', price: 280.0, description: 'Hair Included' },
       { id: 'fulani-s', name: 'Tribe Braids (Fulani braids) small size', duration: '5 hours', price: 350.0, description: 'Hair Included' },
