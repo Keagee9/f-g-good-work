@@ -138,7 +138,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'stitch-braids',
     name: 'Stitch Braids',
-    image: 'https://picsum.photos/600/400?random=5',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47891527.jpg?1686174561',
     variants: [
         { id: 'stitch-12', name: 'Stitch Braids (12 Braids)', duration: '3 hours', price: 180.0, description: 'Hair Included' },
         { id: 'stitch-8', name: 'Stitch Braids (8 Braids)', duration: '2 hours', price: 150.0, description: 'Hair Included' },
