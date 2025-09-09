@@ -54,12 +54,12 @@ export default function Home() {
             </div>
             <div className="flex justify-center">
                 <Image
-                    src="https://picsum.photos/400/400"
-                    alt="F&G Luxury Hair"
+                    src="https://v0-hair-salon-website-design-six.vercel.app/images/fg-luxury-hairs-logo.png"
+                    alt="F&G Luxury Hair Logo"
                     width={400}
                     height={400}
                     className="rounded-lg"
-                    data-ai-hint="woman flower"
+                    data-ai-hint="logo"
                 />
             </div>
           </div>

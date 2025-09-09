@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'v0-hair-salon-website-design-six.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
