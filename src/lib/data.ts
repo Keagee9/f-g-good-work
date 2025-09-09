@@ -36,7 +36,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'butterfly-locs',
     name: 'Butterfly Locs',
-    image: 'https://picsum.photos/600/400?random=7',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-47892318.jpeg?1695331296',
     variants: [
       { id: 'distressed-s', name: 'Distressed Locks Small Size.', duration: '4 hours 30 minutes', price: 320.0, description: 'Hair is not included.' },
       { id: 'distressed-m', name: 'Distressed Locks Medium Size.', duration: '3 hours 30 minutes', price: 280.0, description: 'Hair is not included' },
