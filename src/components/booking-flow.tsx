@@ -436,6 +436,7 @@ Please check your records for the uploaded receipt.
   };
 
   const renderPaymentInstructions = () => {
+    const zelleName = 'Goodness Abengowe';
     const zelleNumber = '(323) 471-8770';
     return (
       <div className="container py-12 flex justify-center items-center px-4 md:px-6">
@@ -462,7 +463,7 @@ Please check your records for the uploaded receipt.
                   Zelle Account Name
                 </p>
                 <p className="text-lg md:text-xl font-semibold text-primary">
-                  Goodness Abengowe
+                  {zelleName}
                 </p>
               </div>
               <Separator />
@@ -629,5 +630,3 @@ Please check your records for the uploaded receipt.
       return renderPolicy();
   }
 }
-
-    
