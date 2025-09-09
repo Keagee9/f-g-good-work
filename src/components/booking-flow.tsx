@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ServiceCategory, ServiceVariant } from '@/lib/types';
@@ -34,9 +35,9 @@ interface BookingFlowProps {
 }
 
 export function BookingFlow({ serviceCategories }: BookingFlowProps) {
-  const [step, setStep] = useState<'service' | 'date' | 'confirmation'>(
-    'service'
-  );
+  const [step, setStep] = useState<
+    'policy' | 'service' | 'date' | 'confirmation'
+  >('policy');
   const [selectedVariant, setSelectedVariant] = useState<ServiceVariant | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -61,12 +62,83 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
   };
 
   const resetFlow = () => {
-    setStep('service');
+    setStep('policy');
     setSelectedVariant(null);
     setSelectedCategory(null);
     setSelectedDate(undefined);
     setSelectedTime(null);
   };
+
+  const renderPolicy = () => (
+    <div className="container py-12 md:py-20">
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold tracking-tight font-headline text-primary text-center">
+            Book Your Appointment
+          </CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
+            Please read our policies before booking
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6 text-sm">
+          <h3 className="text-xl font-bold text-center text-primary">
+            PLEASE READ BEFORE BOOKING ❗️❗️❗️
+          </h3>
+          <ul className="space-y-3 list-disc list-inside bg-card p-4 rounded-md border text-muted-foreground">
+            <li>
+              A 25% non-refundable deposit is required and is applied to the
+              total cost of the service. Your remaining balance will be due in cash.
+            </li>
+            <li>Guests are not allowed. Only children being serviced are allowed 1 guardian to supervise them.</li>
+            <li>Please come with your hair washed and blow-dried.</li>
+            <li>
+              If the style you want isn't an option on the booking site, please text +1 (323) 471-8770 for more assistance. Please allow 24 to 48 hours for a response.
+            </li>
+            <li>
+              A $20 late fee will be applied after 15 minutes. After 30 minutes, your appointment will be cancelled, and your deposit will not be returned.
+            </li>
+            <li>Cash is the only form of payment allowed on the day of service.</li>
+            <li>
+              Hair is included (colors 1, 1B, 2, and 4). There's an extra $15 charge for other colors. Please text the number provided three days prior to your appointment if you want a color that is not listed.
+            </li>
+            <li>
+              If you are picky, have a bad attitude, or bring bad stress to our business because you are not clear with what you want, we will not service you. Your deposit will be forfeited.
+            </li>
+            <li>All no-calls/no-shows will be charged, and your deposit will be forfeited.</li>
+            <li>
+              Hair must be washed, detangled, and properly blown out.
+            </li>
+          </ul>
+          <div className="text-center space-y-2">
+            <p className="font-semibold text-primary">Here's an example of how your hair should be:</p>
+            <Image
+              src="https://v0-hair-salon-website-design-six.vercel.app/images/hair-prep-example.png"
+              alt="Hair preparation example"
+              width={600}
+              height={300}
+              className="rounded-md mx-auto border"
+              data-ai-hint="hair preparation"
+            />
+            <p className="text-xs text-muted-foreground">Hair preparation example showing properly prepared hair with a checkmark vs. improperly prepared hair with an X.</p>
+          </div>
+          <p className="text-center text-xs text-muted-foreground italic pt-4">
+             By proceeding to book, you acknowledge that you have read and agree to all policies above.
+          </p>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4">
+          <Button onClick={() => setStep('service')} size="lg" className="w-full md:w-auto">
+            I Have Read and Agree to the Policies
+          </Button>
+           <Button variant="outline" asChild>
+                <Link href="/">
+                    <Home className="w-4 h-4 mr-2" /> Go Back Home
+                </Link>
+            </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+
 
   const renderServiceSelection = () => (
     <div className="container py-12 md:py-20">
@@ -266,7 +338,9 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
     case 'date':
       return renderDateTimeSelection();
     case 'service':
-    default:
       return renderServiceSelection();
+    case 'policy':
+    default:
+      return renderPolicy();
   }
 }
