@@ -1,8 +1,15 @@
-import { BookingFlow } from '@/components/booking-flow';
 import { Button } from '@/components/ui/button';
-import { services } from '@/lib/data';
 import Image from 'next/image';
 import Link from 'next/link';
+import { serviceCategories } from '@/lib/data';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function Home() {
   return (
@@ -25,7 +32,9 @@ export default function Home() {
               <path d="M14 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" />
               <path d="M21.32 10.2a2.43 2.43 0 0 0-2.64-2.64L14 6l-2.05-4.1a1.6 1.6 0 0 0-2.9 0L7 6l-4.68 1.56a2.43 2.43 0 0 0-2.64 2.64L4 14l-4.1 2.05a1.6 1.6 0 0 0 0 2.9L4 21l1.56 4.68a2.43 2.43 0 0 0 2.64 2.64L12 24l2.05 4.1a1.6 1.6 0 0 0 2.9 0L17 24l4.68-1.56a2.43 2.43 0 0 0 2.64-2.64L20 14l4.1-2.05a1.6 1.6 0 0 0 0-2.9L20 7Z" />
             </svg>
-            <h1 className="text-2xl font-bold font-headline text-foreground">F&G Luxury Hair</h1>
+            <h1 className="text-2xl font-bold font-headline text-foreground">
+              F&G Luxury Hair
+            </h1>
           </div>
         </div>
       </header>
@@ -44,30 +53,61 @@ export default function Home() {
                 Transform Your Look with F&G Luxury Hair Care
               </h2>
               <p className="mt-6 max-w-2xl text-lg text-primary/80">
-                Experience the finest in hair styling, coloring, and treatments at F&G Luxury Hair. Our expert stylists create stunning looks tailored just for you.
+                Experience the finest in hair styling, coloring, and treatments
+                at F&G Luxury Hair. Our expert stylists create stunning looks
+                tailored just for you.
               </p>
               <div className="mt-10">
                 <Button asChild size="lg">
-                  <Link href="#booking">Book Now</Link>
+                  <Link href="/booking">Book Now</Link>
                 </Button>
               </div>
             </div>
             <div className="flex justify-center">
-                <Image
-                    src="https://v0-hair-salon-website-design-six.vercel.app/images/fg-luxury-hairs-logo.png"
-                    alt="F&G Luxury Hair Logo"
-                    width={400}
-                    height={400}
-                    className="rounded-lg"
-                    data-ai-hint="logo"
-                />
+              <Image
+                src="https://v0-hair-salon-website-design-six.vercel.app/images/fg-luxury-hairs-logo.png"
+                alt="F&G Luxury Hair Logo"
+                width={400}
+                height={400}
+                className="rounded-lg"
+                data-ai-hint="logo"
+              />
             </div>
           </div>
         </section>
-        
-        <div id="booking">
-          <BookingFlow services={services} />
-        </div>
+
+        <section id="services" className="container py-12 md:py-20">
+          <h2 className="text-3xl font-bold tracking-tight font-headline text-primary text-center mb-2">
+            Our Services
+          </h2>
+          <p className="text-muted-foreground text-center mb-8">
+            A brief overview of what we offer. Click "Book Now" to see all options.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {serviceCategories.slice(0, 6).map(category => (
+              <Card key={category.id}>
+                <CardHeader>
+                  <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
+                    <Image
+                      src={category.image}
+                      alt={category.name}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      data-ai-hint={category.name}
+                    />
+                  </div>
+                  <CardTitle className="text-primary font-headline">{category.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">
+                    {category.variants[0].description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
       </main>
       <footer className="py-6 md:px-8 md:py-0">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">

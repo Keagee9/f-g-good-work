@@ -1,8 +1,14 @@
-export interface Service {
+export interface ServiceVariant {
   id: string;
   name: string;
-  description: string;
   duration: string;
   price: number;
+  description: string;
+}
+
+export interface ServiceCategory {
+  id: string;
+  name: string;
   image: string;
+  variants: ServiceVariant[];
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Service } from '@/lib/types';
+import type { ServiceCategory, ServiceVariant } from '@/lib/types';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
   CalendarDays,
   Clock,
   DollarSign,
+  Home,
   PartyPopper,
   Wand2,
 } from 'lucide-react';
@@ -25,23 +26,27 @@ import { availableTimes } from '@/lib/data';
 import { StyleSuggestor } from './style-suggestor';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import Link from 'next/link';
 
 interface BookingFlowProps {
-  services: Service[];
+  serviceCategories: ServiceCategory[];
 }
 
-export function BookingFlow({ services }: BookingFlowProps) {
+export function BookingFlow({ serviceCategories }: BookingFlowProps) {
   const [step, setStep] = useState<'service' | 'date' | 'confirmation'>(
     'service'
   );
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ServiceVariant | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     undefined
   );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
+  const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
+    setSelectedVariant(variant);
+    setSelectedCategory(category);
     setStep('date');
   };
 
@@ -57,7 +62,8 @@ export function BookingFlow({ services }: BookingFlowProps) {
 
   const resetFlow = () => {
     setStep('service');
-    setSelectedService(null);
+    setSelectedVariant(null);
+    setSelectedCategory(null);
     setSelectedDate(undefined);
     setSelectedTime(null);
   };
@@ -67,42 +73,65 @@ export function BookingFlow({ services }: BookingFlowProps) {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
-            Choose a Service
+            Select Appointment
           </h2>
           <p className="text-muted-foreground">
-            Select a service to see availability.
+            Choose a service to see available options.
           </p>
         </div>
-        <StyleSuggestor />
+        <div className="flex gap-2">
+            <Button variant="outline" asChild>
+                <Link href="/">
+                    <Home className="w-4 h-4 mr-2" /> Home
+                </Link>
+            </Button>
+            <StyleSuggestor />
+        </div>
       </div>
 
-      <div className="border rounded-lg">
-        {services.map((service, index) => (
-          <div key={service.id}>
-            <div className="flex justify-between items-center p-4 sm:p-6">
-              <div className="flex-1 pr-4">
-                <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-lg font-bold text-foreground">${service.price.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">{service.duration}</p>
+      <Accordion type="single" collapsible className="w-full">
+        {serviceCategories.map(category => (
+          <AccordionItem value={category.id} key={category.id}>
+            <AccordionTrigger className="text-xl font-headline text-primary hover:no-underline">
+                <div className="flex items-center gap-4">
+                    <div className="relative w-24 h-24 rounded-md overflow-hidden">
+                        <Image src={category.image} alt={category.name} fill style={{objectFit: 'cover'}} data-ai-hint={category.name} />
+                    </div>
+                    {category.name}
                 </div>
-                <Button onClick={() => handleServiceSelect(service)} variant="outline">
-                  Select
-                </Button>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="border-l-2 border-primary/20 pl-4 ml-12">
+                {category.variants.map((variant, index) => (
+                  <div key={variant.id}>
+                    <div className="flex justify-between items-center p-4 sm:p-6">
+                      <div className="flex-1 pr-4">
+                        <h3 className="text-lg font-semibold text-primary">{variant.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{variant.description}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">{variant.duration}</p>
+                        </div>
+                        <Button onClick={() => handleVariantSelect(variant, category)} variant="outline">
+                          Select
+                        </Button>
+                      </div>
+                    </div>
+                    {index < category.variants.length - 1 && <Separator />}
+                  </div>
+                ))}
               </div>
-            </div>
-            {index < services.length - 1 && <Separator />}
-          </div>
+            </AccordionContent>
+          </AccordionItem>
         ))}
-      </div>
+      </Accordion>
     </div>
   );
 
   const renderDateTimeSelection = () => {
-    if (!selectedService) return null;
+    if (!selectedVariant || !selectedCategory) return null;
 
     return (
       <div className="container py-8">
@@ -115,21 +144,21 @@ export function BookingFlow({ services }: BookingFlowProps) {
               <CardHeader className="p-0">
                 <div className="relative w-full h-48">
                    <Image
-                    src={selectedService.image}
-                    alt={selectedService.name}
+                    src={selectedCategory.image}
+                    alt={selectedCategory.name}
                     fill
                     style={{ objectFit: 'cover' }}
-                    data-ai-hint={`${selectedService.name.split(' ')[0]} ${selectedService.name.split(' ')[1]}`}
+                    data-ai-hint={`${selectedCategory.name}`}
                   />
                 </div>
                 <div className="p-6">
                   <Badge variant="secondary" className="mb-2">Selected Service</Badge>
-                  <CardTitle className="font-headline text-primary">{selectedService.name}</CardTitle>
+                  <CardTitle className="font-headline text-primary">{selectedVariant.name}</CardTitle>
                    <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                    <Clock className="w-4 h-4 mr-2" /> {selectedService.duration}
+                    <Clock className="w-4 h-4 mr-2" /> {selectedVariant.duration}
                     <span className="mx-2">|</span>
                     <DollarSign className="w-4 h-4 mr-2" />
-                    {selectedService.price.toFixed(2)}
+                    {selectedVariant.price.toFixed(2)}
                   </p>
                 </div>
               </CardHeader>
@@ -185,7 +214,7 @@ export function BookingFlow({ services }: BookingFlowProps) {
   };
 
   const renderConfirmation = () => {
-    if (!selectedService || !selectedDate || !selectedTime) return null;
+    if (!selectedVariant || !selectedDate || !selectedTime) return null;
     return (
       <div className="container py-12 flex justify-center items-center">
         <Card className="w-full max-w-2xl">
@@ -200,7 +229,7 @@ export function BookingFlow({ services }: BookingFlowProps) {
           </CardHeader>
           <CardContent className="space-y-4">
              <div className="border rounded-lg p-4 space-y-2">
-               <h3 className="font-semibold text-lg text-primary">{selectedService.name}</h3>
+               <h3 className="font-semibold text-lg text-primary">{selectedVariant.name}</h3>
                <p className="text-muted-foreground flex items-center">
                 <CalendarDays className="w-4 h-4 mr-2" />
                 {selectedDate.toLocaleDateString('en-US', {
@@ -213,11 +242,11 @@ export function BookingFlow({ services }: BookingFlowProps) {
               </p>
                <p className="text-muted-foreground flex items-center">
                 <Clock className="w-4 h-4 mr-2" />
-                {selectedService.duration}
+                {selectedVariant.duration}
               </p>
                <p className="text-muted-foreground flex items-center">
                 <DollarSign className="w-4 h-4 mr-2" />
-                {selectedService.price.toFixed(2)}
+                {selectedVariant.price.toFixed(2)}
               </p>
              </div>
           </CardContent>
