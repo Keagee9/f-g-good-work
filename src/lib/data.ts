@@ -107,7 +107,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'lemonade-braids',
     name: 'Lemonade Braids',
-    image: 'https://picsum.photos/600/400?random=18',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47893929.jpeg?1695269314',
     variants: [
         { id: 'lemonade', name: 'Lemonade braids', duration: '4 hours', price: 250.0, description: 'hair is included' },
     ]
