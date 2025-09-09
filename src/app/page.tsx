@@ -25,7 +25,7 @@ export default function Home() {
               <path d="M14 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" />
               <path d="M21.32 10.2a2.43 2.43 0 0 0-2.64-2.64L14 6l-2.05-4.1a1.6 1.6 0 0 0-2.9 0L7 6l-4.68 1.56a2.43 2.43 0 0 0-2.64 2.64L4 14l-4.1 2.05a1.6 1.6 0 0 0 0 2.9L4 21l1.56 4.68a2.43 2.43 0 0 0 2.64 2.64L12 24l2.05 4.1a1.6 1.6 0 0 0 2.9 0L17 24l4.68-1.56a2.43 2.43 0 0 0 2.64-2.64L20 14l4.1-2.05a1.6 1.6 0 0 0 0-2.9L20 7Z" />
             </svg>
-            <h1 className="text-2xl font-bold font-headline text-foreground">F&amp;G Luxury Hair</h1>
+            <h1 className="text-2xl font-bold font-headline text-foreground">F&G Luxury Hair</h1>
           </div>
         </div>
       </header>
@@ -41,7 +41,7 @@ export default function Home() {
           <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
             <div className="text-center md:text-left">
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-headline text-primary">
-                Transform Your Look with F&amp;G Luxury Hair Care
+                Transform Your Look with F&G Luxury Hair Care
               </h2>
               <p className="mt-6 max-w-2xl text-lg text-primary/80">
                 Experience the finest in hair styling, coloring, and treatments at F&G Luxury Hair. Our expert stylists create stunning looks tailored just for you.
