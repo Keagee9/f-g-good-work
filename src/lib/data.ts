@@ -168,7 +168,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'wig-install',
     name: 'Wig Install',
-    image: 'https://picsum.photos/600/400?random=17',
+    image: 'https://tse1.mm.bing.net/th/id/OIP.XzbUF4enTs_pLcE7LTyYXAHaHa?cb=ucfimg2&pid=ImgDet&ucfimg=1&w=178&h=178&c=7&dpr=1.5&o=7&rm=3',
     variants: [
       { id: 'wig-install', name: 'wig install', duration: '2 hours', price: 100.0, description: '' },
     ],
