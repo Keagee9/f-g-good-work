@@ -37,6 +37,24 @@ export const services: Service[] = [
     price: 180.0,
     image: 'https://picsum.photos/600/400?random=4',
   },
+    {
+    id: 'butterfly-locs',
+    name: 'Butterfly Locs',
+    description:
+      'A distressed, bohemian style of faux locs with a unique, butterfly-like loop pattern.',
+    duration: '5 hours',
+    price: 220.0,
+    image: 'https://picsum.photos/600/400?random=7',
+  },
+  {
+    id: 'crochet-braids',
+    name: 'Crochet Braids',
+    description:
+      'A quick and easy way to get a new look by crocheting hair extensions into your cornrowed hair.',
+    duration: '2 hours 30 mins',
+    price: 130.0,
+    image: 'https://picsum.photos/600/400?random=8',
+  },
   {
     id: 'stitch-braids',
     name: 'Stitch Braids',

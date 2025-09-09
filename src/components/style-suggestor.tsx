@@ -102,7 +102,7 @@ export function StyleSuggestor() {
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="font-headline text-2xl">
+          <SheetTitle className="font-headline text-2xl text-card-foreground">
             AI Braid Style Suggestor
           </SheetTitle>
           <SheetDescription>
@@ -115,7 +115,7 @@ export function StyleSuggestor() {
             <form onSubmit={handleSubmit}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
+                  <CardTitle className="flex items-center text-primary-foreground">
                     <Upload className="w-5 h-5 mr-2" /> Upload Your Photo
                   </CardTitle>
                 </CardHeader>
@@ -163,11 +163,11 @@ export function StyleSuggestor() {
           {loading && !result && (
              <Card className="mt-4">
                 <CardHeader>
-                    <CardTitle>Generating Suggestions...</CardTitle>
+                    <CardTitle className="text-primary-foreground">Generating Suggestions...</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-center p-8">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                        <Loader2 className="w-12 h-12 text-foreground animate-spin" />
                     </div>
                     <p className="text-center text-muted-foreground">Our AI is analyzing your photo. This may take a moment.</p>
                 </CardContent>
@@ -178,7 +178,7 @@ export function StyleSuggestor() {
             <div className="mt-4 space-y-6 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-headline text-xl">
+                  <CardTitle className="font-headline text-xl text-primary-foreground">
                     Our Recommendations For You
                   </CardTitle>
                   <CardDescription>
@@ -186,7 +186,7 @@ export function StyleSuggestor() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <h4 className="font-semibold mb-3">Suggested Styles:</h4>
+                  <h4 className="font-semibold mb-3 text-primary-foreground">Suggested Styles:</h4>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {result.suggestedStyles.map(style => (
                       <Badge key={style} variant="secondary" className="text-sm py-1 px-3">
@@ -195,7 +195,7 @@ export function StyleSuggestor() {
                     ))}
                   </div>
 
-                  <h4 className="font-semibold mt-6 mb-3">Stylist's Reasoning:</h4>
+                  <h4 className="font-semibold mt-6 mb-3 text-primary-foreground">Stylist's Reasoning:</h4>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                     {result.reasoning}
                   </p>

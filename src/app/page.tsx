@@ -11,8 +11,8 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           <div className="mr-4 flex items-center">
-            <Sparkles className="h-6 w-6 mr-2 text-primary" />
-            <h1 className="text-2xl font-bold font-headline">F&amp;G Luxury Hair</h1>
+            <Sparkles className="h-6 w-6 mr-2 text-foreground" />
+            <h1 className="text-2xl font-bold font-headline text-foreground">F&amp;G Luxury Hair</h1>
           </div>
         </div>
       </header>
@@ -22,15 +22,15 @@ export default function Home() {
               src="https://picsum.photos/1200/800"
               alt="Luxury hair salon"
               fill
-              className="object-cover opacity-20"
+              className="object-cover opacity-10"
               data-ai-hint="salon interior"
             />
           <div className="container mx-auto text-center relative z-10">
-            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-headline">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-headline text-card-foreground">
               Transform Your Look with F&amp;G Luxury Hair Care
             </h2>
             <p className="mt-6 max-w-2xl mx-auto text-lg text-muted-foreground">
-              Experience the finest in hair styling, coloring, and treatments at F&amp;G Luxury Hair. Our expert stylists create stunning looks tailored just for you.
+              Experience the finest in hair styling, coloring, and treatments at F&G Luxury Hair. Our expert stylists create stunning looks tailored just for you.
             </p>
             <div className="mt-10">
               <Button asChild size="lg">
