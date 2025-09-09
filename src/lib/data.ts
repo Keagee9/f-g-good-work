@@ -1,3 +1,4 @@
+
 import type { ServiceCategory } from './types';
 
 export const serviceCategories: ServiceCategory[] = [
@@ -157,7 +158,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'passion-twists',
     name: 'Passion Twists',
-    image: 'https://picsum.photos/600/400?random=13',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-54027021.jpeg?1697474473',
     variants: [
       { id: 'passion-s', name: 'passion twists small size', duration: '5 hours', price: 350.0, description: 'Hair is not included' },
       { id: 'passion-m', name: 'passion twists medium size', duration: '4 hours', price: 250.0, description: 'Hair is not included' },
