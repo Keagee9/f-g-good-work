@@ -334,7 +334,10 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1)) }
+                    disabled={(date) => 
+                        date < new Date(new Date().setDate(new Date().getDate() - 1)) || 
+                        date.getDay() === 0 
+                    }
                     className="rounded-md border"
                   />
                 </div>

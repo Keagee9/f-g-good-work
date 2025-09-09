@@ -84,7 +84,7 @@ export default function Home() {
             A brief overview of what we offer. Click "Book Now" to see all options.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {serviceCategories.slice(0, 6).map(category => (
+            {serviceCategories.map(category => (
               <Card key={category.id}>
                 <CardHeader>
                   <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
