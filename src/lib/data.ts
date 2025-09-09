@@ -26,7 +26,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'box-braids',
     name: 'Box Braids',
-    image: 'https://picsum.photos/600/400?random=4',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-47890745.jpeg?1695331006',
     variants: [
       { id: 'box-s', name: 'Box Braid, Small Size.', duration: '5 hours', price: 350.0, description: 'Hair is Included' },
       { id: 'box-m', name: 'Box Braid, Medium Size.', duration: '4 hours', price: 280.0, description: 'Hair is Included.' },
