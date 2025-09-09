@@ -63,27 +63,36 @@ export function BookingFlow({ services }: BookingFlowProps) {
   };
 
   const renderServiceSelection = () => (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container py-12 md:py-20">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight font-headline">
+          <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
             Choose a Service
           </h2>
-          <p className="text-muted-foreground text-foreground/80">
+          <p className="text-muted-foreground">
             Select a service to see availability.
           </p>
         </div>
         <StyleSuggestor />
       </div>
 
-      <div className="border-t border-b border-border">
+      <div className="border rounded-lg">
         {services.map((service, index) => (
           <div key={service.id}>
-            <div className="flex justify-between items-center py-6">
-              <span className="text-lg font-semibold">{service.name}</span>
-              <Button onClick={() => handleServiceSelect(service)}>
-                Select
-              </Button>
+            <div className="flex justify-between items-center p-4 sm:p-6">
+              <div className="flex-1 pr-4">
+                <h3 className="text-lg font-semibold text-primary">{service.name}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-lg font-bold text-foreground">${service.price.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">{service.duration}</p>
+                </div>
+                <Button onClick={() => handleServiceSelect(service)} variant="outline">
+                  Select
+                </Button>
+              </div>
             </div>
             {index < services.length - 1 && <Separator />}
           </div>
@@ -115,7 +124,7 @@ export function BookingFlow({ services }: BookingFlowProps) {
                 </div>
                 <div className="p-6">
                   <Badge variant="secondary" className="mb-2">Selected Service</Badge>
-                  <CardTitle className="font-headline text-primary-foreground">{selectedService.name}</CardTitle>
+                  <CardTitle className="font-headline text-primary">{selectedService.name}</CardTitle>
                    <p className="text-sm text-muted-foreground mt-2 flex items-center">
                     <Clock className="w-4 h-4 mr-2" /> {selectedService.duration}
                     <span className="mx-2">|</span>
@@ -129,7 +138,7 @@ export function BookingFlow({ services }: BookingFlowProps) {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle className="font-headline flex items-center text-primary-foreground">
+                <CardTitle className="font-headline flex items-center text-primary">
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
                   Select a Date & Time
                 </CardTitle>
@@ -146,7 +155,7 @@ export function BookingFlow({ services }: BookingFlowProps) {
                 </div>
                 {selectedDate && (
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-primary-foreground">
+                    <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-primary">
                       Available Times for{' '}
                       {selectedDate.toLocaleDateString('en-US', {
                         weekday: 'long',
@@ -182,16 +191,16 @@ export function BookingFlow({ services }: BookingFlowProps) {
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center items-center">
             <PartyPopper className="w-16 h-16 text-foreground mb-4" />
-            <CardTitle className="text-3xl font-headline text-primary-foreground">
+            <CardTitle className="text-3xl font-headline text-primary">
               Booking Confirmed!
             </CardTitle>
-            <CardDescription className="text-card-foreground/80">
+            <CardDescription className="text-muted-foreground">
               Your appointment is set. We look forward to seeing you.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
              <div className="border rounded-lg p-4 space-y-2">
-               <h3 className="font-semibold text-lg text-primary-foreground">{selectedService.name}</h3>
+               <h3 className="font-semibold text-lg text-primary">{selectedService.name}</h3>
                <p className="text-muted-foreground flex items-center">
                 <CalendarDays className="w-4 h-4 mr-2" />
                 {selectedDate.toLocaleDateString('en-US', {

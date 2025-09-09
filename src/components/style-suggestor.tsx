@@ -93,7 +93,10 @@ export function StyleSuggestor() {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) resetState();
+      setOpen(isOpen);
+    }}>
       <SheetTrigger asChild>
         <Button variant="outline">
           <Wand2 className="mr-2 h-4 w-4" />
@@ -102,7 +105,7 @@ export function StyleSuggestor() {
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="font-headline text-2xl text-card-foreground">
+          <SheetTitle className="font-headline text-2xl text-primary">
             AI Braid Style Suggestor
           </SheetTitle>
           <SheetDescription>
@@ -115,7 +118,7 @@ export function StyleSuggestor() {
             <form onSubmit={handleSubmit}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center text-primary-foreground">
+                  <CardTitle className="flex items-center text-primary">
                     <Upload className="w-5 h-5 mr-2" /> Upload Your Photo
                   </CardTitle>
                 </CardHeader>
@@ -163,7 +166,7 @@ export function StyleSuggestor() {
           {loading && !result && (
              <Card className="mt-4">
                 <CardHeader>
-                    <CardTitle className="text-primary-foreground">Generating Suggestions...</CardTitle>
+                    <CardTitle className="text-primary">Generating Suggestions...</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-center p-8">
@@ -178,7 +181,7 @@ export function StyleSuggestor() {
             <div className="mt-4 space-y-6 animate-in fade-in-50">
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-headline text-xl text-primary-foreground">
+                  <CardTitle className="font-headline text-xl text-primary">
                     Our Recommendations For You
                   </CardTitle>
                   <CardDescription>
@@ -186,7 +189,7 @@ export function StyleSuggestor() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <h4 className="font-semibold mb-3 text-primary-foreground">Suggested Styles:</h4>
+                  <h4 className="font-semibold mb-3 text-primary">Suggested Styles:</h4>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {result.suggestedStyles.map(style => (
                       <Badge key={style} variant="secondary" className="text-sm py-1 px-3">
@@ -195,7 +198,7 @@ export function StyleSuggestor() {
                     ))}
                   </div>
 
-                  <h4 className="font-semibold mt-6 mb-3 text-primary-foreground">Stylist's Reasoning:</h4>
+                  <h4 className="font-semibold mt-6 mb-3 text-primary">Stylist's Reasoning:</h4>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                     {result.reasoning}
                   </p>

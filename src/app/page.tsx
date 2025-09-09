@@ -17,7 +17,7 @@ export default function Home() {
         </div>
       </header>
       <main className="flex-1">
-        <section className="relative w-full py-20 md:py-32 lg:py-40 bg-card">
+        <section className="relative w-full py-20 md:py-32 lg:py-40 bg-background">
            <Image
               src="https://picsum.photos/1200/800"
               alt="Luxury hair salon"
@@ -26,10 +26,10 @@ export default function Home() {
               data-ai-hint="salon interior"
             />
           <div className="container mx-auto text-center relative z-10">
-            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-headline text-card-foreground">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-headline text-primary">
               Transform Your Look with F&amp;G Luxury Hair Care
             </h2>
-            <p className="mt-6 max-w-2xl mx-auto text-lg text-muted-foreground">
+            <p className="mt-6 max-w-2xl mx-auto text-lg text-primary/80">
               Experience the finest in hair styling, coloring, and treatments at F&G Luxury Hair. Our expert stylists create stunning looks tailored just for you.
             </p>
             <div className="mt-10">
