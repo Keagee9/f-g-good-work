@@ -12,3 +12,10 @@ export interface ServiceCategory {
   image: string;
   variants: ServiceVariant[];
 }
+
+export interface Addon {
+  id: string;
+  name: string;
+  duration: string;
+  price: number;
+}

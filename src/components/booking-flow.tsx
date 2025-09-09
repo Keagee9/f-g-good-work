@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { ServiceCategory, ServiceVariant } from '@/lib/types';
+import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +17,12 @@ import Image from 'next/image';
 import {
   ArrowLeft,
   CalendarDays,
+  Checkbox,
   Clock,
   DollarSign,
   Home,
   PartyPopper,
+  Plus,
   Wand2,
 } from 'lucide-react';
 import { availableTimes } from '@/lib/data';
@@ -32,14 +34,16 @@ import Link from 'next/link';
 
 interface BookingFlowProps {
   serviceCategories: ServiceCategory[];
+  addons: Addon[];
 }
 
-export function BookingFlow({ serviceCategories }: BookingFlowProps) {
+export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const [step, setStep] = useState<
-    'policy' | 'service' | 'date' | 'confirmation'
+    'policy' | 'service' | 'addons' | 'date' | 'confirmation'
   >('policy');
   const [selectedVariant, setSelectedVariant] = useState<ServiceVariant | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
+  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     undefined
   );
@@ -48,7 +52,17 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
   const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
     setSelectedVariant(variant);
     setSelectedCategory(category);
-    setStep('date');
+    setStep('addons');
+  };
+
+  const handleAddonToggle = (addon: Addon) => {
+    setSelectedAddons(prev => {
+      if (prev.find(a => a.id === addon.id)) {
+        return prev.filter(a => a.id !== addon.id);
+      } else {
+        return [...prev, addon];
+      }
+    });
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -65,9 +79,16 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
     setStep('policy');
     setSelectedVariant(null);
     setSelectedCategory(null);
+    setSelectedAddons([]);
     setSelectedDate(undefined);
     setSelectedTime(null);
   };
+
+  const getTotalPrice = () => {
+    const variantPrice = selectedVariant?.price || 0;
+    const addonsPrice = selectedAddons.reduce((total, addon) => total + addon.price, 0);
+    return variantPrice + addonsPrice;
+  }
 
   const renderPolicy = () => (
     <div className="container py-12 md:py-20">
@@ -152,10 +173,8 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
           </p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" asChild>
-                <Link href="/">
-                    <Home className="w-4 h-4 mr-2" /> Home
-                </Link>
+            <Button variant="outline" onClick={() => setStep('policy')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Back to Policy
             </Button>
             <StyleSuggestor />
         </div>
@@ -201,14 +220,63 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
       </Accordion>
     </div>
   );
+  
+  const renderAddonSelection = () => {
+    if (!selectedVariant) return null;
+    return (
+        <div className="container py-12 md:py-20">
+            <Button variant="ghost" onClick={() => setStep('service')} className="mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Services
+            </Button>
+            <Card className="w-full max-w-4xl mx-auto">
+                <CardHeader>
+                    <CardTitle className="text-3xl font-bold tracking-tight font-headline text-primary text-center">
+                        Add to Your Appointment
+                    </CardTitle>
+                    <CardDescription className="text-center text-muted-foreground">
+                        Select any add-ons you'd like to include.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {addons.map(addon => (
+                        <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
+                           <div className="flex items-center gap-4">
+                                <Checkbox 
+                                  id={addon.id} 
+                                  onCheckedChange={() => handleAddonToggle(addon)}
+                                  checked={!!selectedAddons.find(a => a.id === addon.id)}
+                                />
+                                <label htmlFor={addon.id} className="flex flex-col">
+                                    <span className="font-semibold text-primary">{addon.name}</span>
+                                    <span className="text-sm text-muted-foreground">{addon.duration}</span>
+                                </label>
+                            </div>
+                            <div className="text-lg font-bold text-foreground">
+                                +${addon.price.toFixed(2)}
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+                <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="text-xl font-bold text-primary">
+                        Total: ${getTotalPrice().toFixed(2)}
+                    </div>
+                    <Button onClick={() => setStep('date')} size="lg">
+                        Continue to Date Selection
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+    );
+  }
 
   const renderDateTimeSelection = () => {
     if (!selectedVariant || !selectedCategory) return null;
 
     return (
       <div className="container py-8">
-        <Button variant="ghost" onClick={resetFlow} className="mb-4">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Services
+        <Button variant="ghost" onClick={() => setStep('addons')} className="mb-4">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Add-ons
         </Button>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
@@ -228,9 +296,25 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
                   <CardTitle className="font-headline text-primary">{selectedVariant.name}</CardTitle>
                    <p className="text-sm text-muted-foreground mt-2 flex items-center">
                     <Clock className="w-4 h-4 mr-2" /> {selectedVariant.duration}
-                    <span className="mx-2">|</span>
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    {selectedVariant.price.toFixed(2)}
+                  </p>
+                  <Separator className="my-4" />
+                  <h4 className="font-semibold text-primary mb-2">Add-ons</h4>
+                  {selectedAddons.length > 0 ? (
+                    <ul className="space-y-2">
+                        {selectedAddons.map(addon => (
+                            <li key={addon.id} className="flex justify-between text-sm text-muted-foreground">
+                                <span>{addon.name}</span>
+                                <span>+${addon.price.toFixed(2)}</span>
+                            </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No add-ons selected.</p>
+                  )}
+                  <Separator className="my-4" />
+                   <p className="text-lg font-bold text-foreground flex items-center justify-between">
+                    <span>Total</span>
+                    <span>${getTotalPrice().toFixed(2)}</span>
                   </p>
                 </div>
               </CardHeader>
@@ -300,8 +384,18 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className="border rounded-lg p-4 space-y-2">
+             <div className="border rounded-lg p-4 space-y-3">
                <h3 className="font-semibold text-lg text-primary">{selectedVariant.name}</h3>
+                {selectedAddons.length > 0 && (
+                    <div>
+                        <h4 className="font-semibold text-primary/80 text-sm">Add-ons:</h4>
+                        <ul className="list-disc list-inside text-muted-foreground text-sm">
+                            {selectedAddons.map(addon => (
+                                <li key={addon.id}>{addon.name}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
                <p className="text-muted-foreground flex items-center">
                 <CalendarDays className="w-4 h-4 mr-2" />
                 {selectedDate.toLocaleDateString('en-US', {
@@ -316,9 +410,10 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
                 <Clock className="w-4 h-4 mr-2" />
                 {selectedVariant.duration}
               </p>
-               <p className="text-muted-foreground flex items-center">
-                <DollarSign className="w-4 h-4 mr-2" />
-                {selectedVariant.price.toFixed(2)}
+              <Separator />
+               <p className="font-bold text-lg text-foreground flex items-center justify-between">
+                <span>Total Amount:</span>
+                <span>${getTotalPrice().toFixed(2)}</span>
               </p>
              </div>
           </CardContent>
@@ -337,6 +432,8 @@ export function BookingFlow({ serviceCategories }: BookingFlowProps) {
       return renderConfirmation();
     case 'date':
       return renderDateTimeSelection();
+    case 'addons':
+      return renderAddonSelection();
     case 'service':
       return renderServiceSelection();
     case 'policy':

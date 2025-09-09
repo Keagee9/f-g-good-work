@@ -1,5 +1,6 @@
 import { BookingFlow } from '@/components/booking-flow';
 import { serviceCategories } from '@/lib/data';
+import { addons } from '@/lib/addons';
 
 export default function BookingPage() {
   return (
@@ -27,7 +28,7 @@ export default function BookingPage() {
         </div>
       </header>
       <main className="flex-1">
-         <BookingFlow serviceCategories={serviceCategories} />
+         <BookingFlow serviceCategories={serviceCategories} addons={addons} />
       </main>
        <footer className="py-6 md:px-8 md:py-0">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
