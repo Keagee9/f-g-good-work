@@ -129,7 +129,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'sew-in',
     name: 'Sew-In',
-    image: 'https://picsum.photos/600/400?random=15',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/sew.png',
     variants: [
       { id: 'sew-in-closure', name: 'Sew-in (Closure)', duration: '2 hours', price: 180.0, description: 'Hair is not included' },
       { id: 'sew-in-leave-out', name: 'Sew-in (Leave Out)', duration: '2 hours', price: 150.0, description: 'Hair is not Included.' },
