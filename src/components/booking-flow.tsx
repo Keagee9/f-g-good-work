@@ -103,18 +103,18 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   }
 
   const renderPolicy = () => (
-    <div className="container py-12 md:py-20">
+    <div className="container py-8 md:py-12 px-4 md:px-6">
       <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight font-headline text-primary text-center">
+          <CardTitle className="text-2xl md:text-3xl font-bold tracking-tight font-headline text-primary text-center">
             Book Your Appointment
           </CardTitle>
-          <CardDescription className="text-center text-muted-foreground">
+          <CardDescription className="text-center text-muted-foreground px-4">
             Please read our policies before booking
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 text-sm">
-          <h3 className="text-xl font-bold text-center text-primary">
+          <h3 className="text-lg md:text-xl font-bold text-center text-primary">
             PLEASE READ BEFORE BOOKING ❗️❗️❗️
           </h3>
           <ul className="space-y-3 list-disc list-inside bg-card p-4 rounded-md border text-muted-foreground">
@@ -149,7 +149,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
               alt="Hair preparation example"
               width={600}
               height={300}
-              className="rounded-md mx-auto border"
+              className="rounded-md mx-auto border w-full max-w-md"
               data-ai-hint="hair preparation"
             />
             <p className="text-xs text-muted-foreground">Hair preparation example showing properly prepared hair with a checkmark vs. improperly prepared hair with an X.</p>
@@ -174,19 +174,19 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
 
 
   const renderServiceSelection = () => (
-    <div className="container py-12 md:py-20">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container py-8 md:py-12 px-4 md:px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight font-headline text-primary">
             Select Appointment
           </h2>
           <p className="text-muted-foreground">
             Choose a service to see available options.
           </p>
         </div>
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStep('policy')}>
-                  <ArrowLeft className="w-4 h-4 mr-2" /> Back to Policy
+        <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setStep('policy')} className="flex-grow sm:flex-grow-0">
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
             <StyleSuggestor />
         </div>
@@ -195,25 +195,25 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
       <Accordion type="single" collapsible className="w-full">
         {serviceCategories.map(category => (
           <AccordionItem value={category.id} key={category.id}>
-            <AccordionTrigger className="text-xl font-headline text-primary hover:no-underline">
-                <div className="flex items-center gap-4">
-                    <div className="relative w-24 h-24 rounded-md overflow-hidden">
+            <AccordionTrigger className="text-lg md:text-xl font-headline text-primary hover:no-underline">
+                <div className="flex items-center gap-4 text-left">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden flex-shrink-0">
                         <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
                     </div>
                     {category.name}
                 </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="border-l-2 border-primary/20 pl-4 ml-12">
+              <div className="border-l-2 border-primary/20 pl-4 ml-6 md:ml-12">
                 {category.variants.map((variant, index) => (
                   <div key={variant.id}>
-                    <div className="flex justify-between items-center p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
                       <div className="flex-1 pr-4">
-                        <h3 className="text-lg font-semibold text-primary">{variant.name}</h3>
+                        <h3 className="text-base md:text-lg font-semibold text-primary">{variant.name}</h3>
                         <p className="text-sm text-muted-foreground mt-1">{variant.description}</p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
+                      <div className="flex items-center gap-4 w-full sm:w-auto">
+                        <div className="text-left sm:text-right flex-grow">
                           <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
                           <p className="text-sm text-muted-foreground">{variant.duration}</p>
                         </div>
@@ -236,16 +236,16 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const renderAddonSelection = () => {
     if (!selectedVariant) return null;
     return (
-        <div className="container py-12 md:py-20">
+        <div className="container py-8 md:py-12 px-4 md:px-6">
             <Button variant="ghost" onClick={() => setStep('service')} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Services
             </Button>
             <Card className="w-full max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bold tracking-tight font-headline text-primary text-center">
+                    <CardTitle className="text-2xl md:text-3xl font-bold tracking-tight font-headline text-primary text-center">
                         Add to Your Appointment
                     </CardTitle>
-                    <CardDescription className="text-center text-muted-foreground">
+                    <CardDescription className="text-center text-muted-foreground px-4">
                         Select any add-ons you'd like to include.
                     </CardDescription>
                 </CardHeader>
@@ -263,7 +263,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                                     <span className="text-sm text-muted-foreground">{addon.duration}</span>
                                 </label>
                             </div>
-                            <div className="text-lg font-bold text-foreground">
+                            <div className="text-base md:text-lg font-bold text-foreground text-right">
                                 +${addon.price.toFixed(2)}
                             </div>
                         </div>
@@ -274,7 +274,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                         Total: ${getTotalPrice().toFixed(2)}
                     </div>
                     <Button onClick={() => setStep('date')} size="lg">
-                        Continue to Date Selection
+                        Continue
                     </Button>
                 </CardFooter>
             </Card>
@@ -286,7 +286,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
     if (!selectedVariant || !selectedCategory) return null;
 
     return (
-      <div className="container py-8">
+      <div className="container py-8 px-4 md:px-6">
         <Button variant="ghost" onClick={() => setStep('addons')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Add-ons
         </Button>
@@ -335,13 +335,13 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle className="font-headline flex items-center text-primary">
+                <CardTitle className="font-headline flex items-center text-primary text-xl md:text-2xl">
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
                   Select a Date &amp; Time
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col md:flex-row gap-8">
-                <div className="flex justify-center">
+              <CardContent className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="w-full md:w-auto flex justify-center">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -355,7 +355,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                   />
                 </div>
                 {selectedDate && (
-                  <div className="flex-1">
+                  <div className="flex-1 w-full">
                     <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-primary">
                       Available Times for{' '}
                       {selectedDate.toLocaleDateString('en-US', {
@@ -364,7 +364,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                         day: 'numeric',
                       })}
                     </h3>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {availableTimes.map(time => (
                         <Button
                           key={time}
@@ -388,7 +388,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const renderPaymentInstructions = () => {
     const zelleNumber = '(323) 471-8770';
     return (
-      <div className="container py-12 flex justify-center items-center">
+      <div className="container py-12 flex justify-center items-center px-4 md:px-6">
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <Button
@@ -396,12 +396,12 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
               onClick={() => setStep('date')}
               className="self-start"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Date Selection
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
-            <CardTitle className="text-3xl font-headline text-primary text-center pt-4">
+            <CardTitle className="text-2xl md:text-3xl font-headline text-primary text-center pt-4">
               Payment Instructions - Zelle Only
             </CardTitle>
-            <CardDescription className="text-center text-muted-foreground">
+            <CardDescription className="text-center text-muted-foreground px-4">
               Send Your Deposit via Zelle to confirm your appointment.
             </CardDescription>
           </CardHeader>
@@ -411,7 +411,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                 <p className="text-sm text-muted-foreground">
                   Zelle Account Name
                 </p>
-                <p className="text-xl font-semibold text-primary">
+                <p className="text-lg md:text-xl font-semibold text-primary">
                   Goodness Abengowe
                 </p>
               </div>
@@ -421,7 +421,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                   Account Number
                 </p>
                 <div className="flex items-center justify-center gap-4">
-                  <p className="text-2xl font-bold font-mono tracking-wider text-primary">
+                  <p className="text-xl md:text-2xl font-bold font-mono tracking-wider text-primary">
                     {zelleNumber}
                   </p>
                   <Button
@@ -456,14 +456,14 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const renderConfirmation = () => {
     if (!selectedVariant || !selectedDate || !selectedTime) return null;
     return (
-      <div className="container py-12 flex justify-center items-center">
+      <div className="container py-12 flex justify-center items-center px-4 md:px-6">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center items-center">
             <PartyPopper className="w-16 h-16 text-foreground mb-4" />
-            <CardTitle className="text-3xl font-headline text-primary">
+            <CardTitle className="text-2xl md:text-3xl font-headline text-primary">
               Booking Confirmed!
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-muted-foreground px-4">
               Your appointment is set. We look forward to seeing you.
             </CardDescription>
           </CardHeader>
@@ -473,7 +473,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                 {selectedAddons.length > 0 && (
                     <div>
                         <h4 className="font-semibold text-primary/80 text-sm">Add-ons:</h4>
-                        <ul className="list-disc list-inside text-muted-foreground text-sm">
+                        <ul className="list-disc list-inside text-muted-foreground text-sm pl-4">
                             {selectedAddons.map(addon => (
                                 <li key={addon.id}>{addon.name}</li>
                             ))}
@@ -527,5 +527,3 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
       return renderPolicy();
   }
 }
-
-    

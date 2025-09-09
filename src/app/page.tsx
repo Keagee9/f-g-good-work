@@ -33,7 +33,7 @@ export default function Home() {
               <path d="M14 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" />
               <path d="M21.32 10.2a2.43 2.43 0 0 0-2.64-2.64L14 6l-2.05-4.1a1.6 1.6 0 0 0-2.9 0L7 6l-4.68 1.56a2.43 2.43 0 0 0-2.64 2.64L4 14l-4.1 2.05a1.6 1.6 0 0 0 0 2.9L4 21l1.56 4.68a2.43 2.43 0 0 0 2.64 2.64L12 24l2.05 4.1a1.6 1.6 0 0 0 2.9 0L17 24l4.68-1.56a2.43 2.43 0 0 0 2.64-2.64L20 14l4.1-2.05a1.6 1.6 0 0 0 0-2.9L20 7Z" />
             </svg>
-            <h1 className="text-2xl font-bold font-headline text-foreground">
+            <h1 className="text-xl md:text-2xl font-bold font-headline text-foreground">
               F&G Luxury Hair
             </h1>
           </div>
@@ -48,12 +48,12 @@ export default function Home() {
             className="object-cover opacity-10"
             data-ai-hint="salon interior"
           />
-          <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
+          <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10 px-4 md:px-6">
             <div className="text-center md:text-left">
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-headline text-primary">
                 Transform Your Look with F&G Luxury Hair Care
               </h2>
-              <p className="mt-6 max-w-2xl text-lg text-primary/80">
+              <p className="mt-6 max-w-2xl mx-auto md:mx-0 text-lg text-primary/80">
                 Experience the finest in hair styling, coloring, and treatments
                 at F&G Luxury Hair. Our expert stylists create stunning looks
                 tailored just for you.
@@ -70,14 +70,14 @@ export default function Home() {
                 alt="F&G Luxury Hair Logo"
                 width={400}
                 height={400}
-                className="rounded-lg"
+                className="rounded-lg w-full max-w-xs sm:max-w-sm h-auto"
                 data-ai-hint="logo"
               />
             </div>
           </div>
         </section>
 
-        <section id="services" className="container py-12 md:py-20">
+        <section id="services" className="container py-12 md:py-20 px-4 md:px-6">
           <h2 className="text-3xl font-bold tracking-tight font-headline text-primary text-center mb-2">
             Our Services
           </h2>
@@ -111,7 +111,7 @@ export default function Home() {
 
       </main>
       <footer className="bg-card text-card-foreground py-8">
-        <div className="container grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+        <div className="container grid grid-cols-1 md:grid-cols-3 gap-8 text-sm px-4 md:px-6">
           <div className="space-y-4">
             <h3 className="font-bold text-lg text-primary">Contact Us</h3>
             <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <div className="flex flex-col items-start md:items-end">
+          <div className="flex flex-col items-start md:items-end text-left md:text-right">
             <p className="text-sm text-muted-foreground">
               Built with Next.js and Generative AI.
             </p>

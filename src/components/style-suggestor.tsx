@@ -98,9 +98,9 @@ export function StyleSuggestor() {
       setOpen(isOpen);
     }}>
       <SheetTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" className="flex-grow sm:flex-grow-0">
           <Wand2 className="mr-2 h-4 w-4" />
-          AI Style Suggestor
+          AI Suggestor
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
