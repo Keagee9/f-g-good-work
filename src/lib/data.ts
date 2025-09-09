@@ -147,18 +147,6 @@ export const serviceCategories: ServiceCategory[] = [
     ],
   },
   {
-    id: 'take-down',
-    name: 'Take Down',
-    image: 'https://picsum.photos/600/400?random=19',
-    variants: [
-        { id: 'takedown-s', name: 'Take Downs (small knotless braids/bohemian knotless braids )', duration: '2 hours', price: 100.0, description: '' },
-        { id: 'takedown-m', name: 'Take Downs (medium knotless braids/bohemian knotless braids )', duration: '1 hour', price: 70.0, description: '' },
-        { id: 'takedown-l', name: 'Take Downs (lager knotless braids)', duration: '30 minutes', price: 50.0, description: '' },
-        { id: 'takedown-locs-s', name: 'Take Downs (locs small size)', duration: '1 hour', price: 80.0, description: '' },
-        { id: 'takedown-locs-m', name: 'Take Downs (locs medium size)', duration: '30 minutes', price: 60.0, description: '' },
-    ]
-  },
-  {
     id: 'touch-up',
     name: 'Touch up',
     image: 'https://picsum.photos/600/400?random=16',
