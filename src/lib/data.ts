@@ -149,7 +149,7 @@ export const serviceCategories: ServiceCategory[] = [
   {
     id: 'touch-up',
     name: 'Touch up',
-    image: 'https://picsum.photos/600/400?random=16',
+    image: 'https://tse4.mm.bing.net/th/id/OIP.nTFZbK-TIT5ChU7We8SrjAAAAA?cb=ucfimg2&pid=ImgDet&ucfimg=1&w=178&h=178&c=7&dpr=1.5&o=7&rm=3',
     variants: [
       { id: 'touch-up', name: 'Touch up', duration: '2 hours', price: 100.0, description: 'only two rolls in the front, and one roll at the back.' },
     ],

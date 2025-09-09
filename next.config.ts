@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: 'cdn-s.acuityscheduling.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'tse4.mm.bing.net',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
