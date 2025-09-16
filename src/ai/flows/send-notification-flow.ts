@@ -33,11 +33,18 @@ const sendNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     
+    // Check for required environment variables
+    if (!process.env.EMAIL_HOST || !process.env.EMAIL_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        const message = "Email environment variables (EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS) are not set. Please configure them in your .env file to enable email notifications.";
+        console.error(message);
+        return { success: false, message: message };
+    }
+
     // Email Notification
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT || '587', 10),
-        secure: (process.env.EMAIL_PORT || '587') === '465', // true for 465, false for other ports
+        port: parseInt(process.env.EMAIL_PORT, 10),
+        secure: process.env.EMAIL_PORT === '465', // true for 465, false for other ports
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -85,7 +92,7 @@ const sendNotificationFlow = ai.defineFlow(
 
     } catch (error) {
         console.error("Failed to send email:", error);
-        return { success: false, message: "Failed to send email notification. Please check server logs and environment variables." };
+        return { success: false, message: "Failed to send email notification. Please check server logs and that your environment variables are correct." };
     }
   }
 );
