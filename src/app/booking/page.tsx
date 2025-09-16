@@ -42,7 +42,7 @@ export default function BookingPage() {
             </div>
             <div className="flex items-center gap-3">
               <MapPin className="w-4 h-4 text-primary" />
-              <span>Los Angeles, CA</span>
+              <span>13130 Doty Ave apt 9 Hawthorn ca 90250</span>
             </div>
             <div className="flex items-center gap-3">
               <Clock className="w-4 h-4 text-primary" />
@@ -82,3 +82,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+    
