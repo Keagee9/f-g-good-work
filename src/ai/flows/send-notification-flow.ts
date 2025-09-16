@@ -33,31 +33,7 @@ const sendNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // 1. Send WhatsApp Message (URL generation handled client-side)
-    const addonsText = input.addons.length > 0 
-      ? `\nAdd-ons:\n${input.addons.map(a => `- ${a}`).join('\n')}` 
-      : '\nAdd-ons: None';
-
-    const whatsappMessage = `
-*New Booking Notification!*
-
-A client has booked an appointment and uploaded their payment receipt.
-
-*Client Details:*
-- *Name:* ${input.customerName}
-- *Email:* ${input.customerEmail}
-- *Phone:* ${input.customerPhone}
-
-*Booking Details:*
-- *Service:* ${input.serviceName}
-- *Date:* ${input.date}
-- *Time:* ${input.time}
-- *Total Price:* $${input.totalPrice.toFixed(2)}${addonsText}
-
-Please check your records for the uploaded receipt.
-`.trim();
-    
-    // 2. Send Email Notification
+    // Email Notification
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT || '587', 10),
@@ -105,12 +81,11 @@ Please check your records for the uploaded receipt.
             }] : [],
         });
         
-        return { success: true, message: "WhatsApp notification ready and email sent." };
+        return { success: true, message: "Email notification sent successfully." };
 
     } catch (error) {
         console.error("Failed to send email:", error);
-        // Still return success for whatsapp, but failure for email
-        return { success: false, message: "WhatsApp link generated, but failed to send email notification." };
+        return { success: false, message: "Failed to send email notification. Please check server logs and environment variables." };
     }
   }
 );
