@@ -198,7 +198,13 @@ Please check your records for the uploaded receipt.
             </li>
             <li>Cash is the only form of payment allowed on the day of service.</li>
             <li>
-              Hair is included (colors 1, 1B, 2, and 4). There's an extra $15 charge for other colors. Please text the number provided three days prior to your appointment if you want a color that is not listed.
+              Hair is included (colors 1, 1B, 2, and 4). There's an extra $15 charge for other colors.
+            </li>
+            <li>
+              ( please note. When making boho braids customers will provide their own curly hair. When adding more than 2 bundles of curly hair will be extra ($50)
+            </li>
+            <li>
+              Please text the number provided three days prior to your appointment if you want a color that is not listed.
             </li>
             <li>
               If you are picky, have a bad attitude, or bring bad stress to our business because you are not clear with what you want, we will not service you. Your deposit will be forfeited.
@@ -665,5 +671,3 @@ Please check your records for the uploaded receipt.
       return renderPolicy();
   }
 }
-
-    
