@@ -3,8 +3,6 @@
 /**
  * @fileOverview A flow for sending booking notifications and saving bookings to Firestore.
  */
-import { config } from 'dotenv';
-config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
@@ -47,10 +45,6 @@ const sendNotificationFlow = ai.defineFlow(
             createdAt: d.FieldValue.serverTimestamp(), // Add a server timestamp
             status: 'confirmed', // Default status
         };
-        // We don't want to store the large image data URI in the main document
-        if ('receiptDataUri' in bookingData) {
-            delete (bookingData as Partial<typeof bookingData>).receiptDataUri;
-        }
 
         const bookingRef = await db.collection('bookings').add(bookingData);
         console.log('Booking saved successfully with ID:', bookingRef.id);

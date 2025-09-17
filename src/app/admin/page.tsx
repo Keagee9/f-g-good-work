@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getBookings, type Booking } from '@/ai/flows/get-bookings-flow';
+import { getBookings, type GetBookingsResponse } from '@/ai/flows/get-bookings-flow';
+import type { Booking } from '@/ai/flows/get-bookings-flow';
 import {
   Table,
   TableHeader,
@@ -19,15 +20,24 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertCircle, LogOut } from 'lucide-react';
+import { Loader2, AlertCircle, LogOut, Receipt } from 'lucide-react';
 import { AuthGuard } from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -36,8 +46,9 @@ function AdminDashboard() {
     async function fetchBookings() {
       try {
         setLoading(true);
-        const fetchedBookings = await getBookings();
+        const { bookings: fetchedBookings, bookedSlots: fetchedSlots } = await getBookings();
         setBookings(fetchedBookings);
+        setBookedSlots(fetchedSlots);
       } catch (err) {
         setError('Failed to fetch bookings. Please try again later.');
         console.error(err);
@@ -91,7 +102,7 @@ function AdminDashboard() {
           <CardHeader>
             <CardTitle>All Bookings</CardTitle>
             <CardDescription>
-              A complete list of all appointments.
+              A complete list of all appointments. Click on a receipt icon to view the proof of payment.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -113,10 +124,10 @@ function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Appointment Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Booked On</TableHead>
+                      <TableHead>Appointment</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-right">Receipt</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -126,19 +137,48 @@ function AdminDashboard() {
                           <TableCell>
                             <div className="font-medium text-primary">{booking.customerName}</div>
                             <div className="text-sm text-muted-foreground">{booking.customerEmail}</div>
-                            <div className="text-sm text-muted-foreground">{booking.customerPhone}</div>
+                             <div className="text-sm text-muted-foreground">{booking.customerPhone}</div>
                           </TableCell>
-                          <TableCell>{booking.serviceName}</TableCell>
                           <TableCell>
-                            <div>{booking.date}</div>
+                             <div>{booking.date}</div>
                             <div className="text-sm text-muted-foreground">{booking.time}</div>
+                            <div className="text-xs text-muted-foreground mt-1">Booked: {booking.createdAt}</div>
                           </TableCell>
                           <TableCell>
+                             <div>{booking.serviceName}</div>
+                             <div className="text-sm font-bold text-foreground">${booking.totalPrice.toFixed(2)}</div>
+                              {booking.addons && booking.addons.length > 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Add-ons: {booking.addons.join(', ')}
+                                </div>
+                              )}
+                          </TableCell>
+                          <TableCell className="text-center">
                             <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
                               {booking.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right text-muted-foreground">{booking.createdAt}</TableCell>
+                          <TableCell className="text-right">
+                             {booking.receiptDataUri ? (
+                               <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <Receipt className="h-5 w-5 text-primary" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md">
+                                    <DialogHeader>
+                                    <DialogTitle>Payment Receipt for {booking.customerName}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="relative mt-4 w-full aspect-video rounded-md overflow-hidden border">
+                                        <Image src={booking.receiptDataUri} alt={`Receipt for ${booking.customerName}`} fill style={{ objectFit: 'contain' }} />
+                                    </div>
+                                </DialogContent>
+                               </Dialog>
+                             ) : (
+                                <span className="text-xs text-muted-foreground">No receipt</span>
+                             )}
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : (

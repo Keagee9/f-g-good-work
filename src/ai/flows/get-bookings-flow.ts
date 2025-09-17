@@ -26,11 +26,21 @@ export interface Booking {
   addons: string[];
   createdAt: string; // We'll convert the Timestamp to a string
   status: string;
+  receiptDataUri?: string;
 }
 
-const GetBookingsOutputSchema = z.array(z.any());
+export interface GetBookingsResponse {
+    bookings: Booking[];
+    bookedSlots: string[];
+}
 
-export async function getBookings(): Promise<Booking[]> {
+const GetBookingsOutputSchema = z.object({
+    bookings: z.array(z.any()),
+    bookedSlots: z.array(z.string()),
+});
+
+
+export async function getBookings(): Promise<GetBookingsResponse> {
     return getBookingsFlow();
 }
 
@@ -43,6 +53,7 @@ const getBookingsFlow = ai.defineFlow(
   async () => {
     const bookingsSnapshot = await db.collection('bookings').orderBy('createdAt', 'desc').get();
     const bookings: Booking[] = [];
+    const bookedSlots: string[] = [];
     
     bookingsSnapshot.forEach(doc => {
         const data = doc.data();
@@ -60,7 +71,7 @@ const getBookingsFlow = ai.defineFlow(
               })
             : 'N/A';
 
-        bookings.push({
+        const booking: Booking = {
             id: doc.id,
             customerName: data.customerName,
             customerEmail: data.customerEmail,
@@ -72,9 +83,19 @@ const getBookingsFlow = ai.defineFlow(
             addons: data.addons || [],
             createdAt: createdAtString,
             status: data.status,
-        });
+            receiptDataUri: data.receiptDataUri,
+        };
+        bookings.push(booking);
+        
+        // Add date and time to bookedSlots for calendar disabling logic
+        if (data.date && data.time) {
+            // We need to parse the friendly date string back to a standard format
+            const dateObj = new Date(data.date);
+            const isoDate = dateObj.toISOString().split('T')[0];
+            bookedSlots.push(`${isoDate}_${data.time}`);
+        }
     });
 
-    return bookings;
+    return { bookings, bookedSlots };
   }
 );
