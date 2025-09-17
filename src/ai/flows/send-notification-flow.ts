@@ -7,7 +7,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
-import { db } from '@/lib/firebase-admin';
 import * as nodemailer from 'nodemailer';
 
 const NotificationInputSchema = z.object({
@@ -34,6 +33,11 @@ const sendNotificationFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
+    // Ensure Firebase is initialized only once.
+    if (admin.apps.length === 0) {
+      admin.initializeApp();
+    }
+    const db = admin.firestore();
     
     // Step 1: Save booking to Firestore. This is the most critical step.
     try {
@@ -99,7 +103,7 @@ const sendNotificationFlow = ai.defineFlow(
         await transporter.sendMail({
             from: `"F&G Luxury Hair" <${process.env.EMAIL_USER}>`,
             to: "kingsleyfrancis.kalu@gmail.com",
-            subject: `New Booking & Receipt From: ${input.customerName}`,
+            subject: `Receipt Attached: New Booking From ${input.customerName}`,
             html: emailHtml,
             attachments: input.receiptDataUri ? [{
                 filename: 'receipt.png',
