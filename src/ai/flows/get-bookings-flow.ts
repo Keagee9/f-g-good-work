@@ -3,8 +3,6 @@
 /**
  * @fileOverview A flow for retrieving all bookings from Firestore.
  */
-import { config } from 'dotenv';
-config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
@@ -50,6 +48,18 @@ const getBookingsFlow = ai.defineFlow(
         const data = doc.data();
         const createdAt = data.createdAt as Timestamp;
 
+        // Handle cases where createdAt might not exist on older documents
+        const createdAtString = createdAt 
+            ? createdAt.toDate().toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              })
+            : 'N/A';
+
         bookings.push({
             id: doc.id,
             customerName: data.customerName,
@@ -60,15 +70,7 @@ const getBookingsFlow = ai.defineFlow(
             time: data.time,
             totalPrice: data.totalPrice,
             addons: data.addons || [],
-            // Convert timestamp to a more JSON-friendly format
-            createdAt: createdAt.toDate().toLocaleString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            }),
+            createdAt: createdAtString,
             status: data.status,
         });
     });
