@@ -6,12 +6,16 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import * as d from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
-import { app } from '@/lib/firebase-admin'; // Using admin app
 import * as nodemailer from 'nodemailer';
 
-const db = getFirestore(app);
+// Ensure Firebase Admin is initialized only once.
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+const db = getFirestore();
+
 
 const NotificationInputSchema = z.object({
     customerName: z.string(),
@@ -42,7 +46,7 @@ const sendNotificationFlow = ai.defineFlow(
     try {
         const bookingData = {
             ...input,
-            createdAt: d.FieldValue.serverTimestamp(), // Add a server timestamp
+            createdAt: admin.firestore.FieldValue.serverTimestamp(), // Add a server timestamp
             status: 'confirmed', // Default status
         };
 
