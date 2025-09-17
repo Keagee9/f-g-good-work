@@ -1,3 +1,4 @@
+
 import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -8,3 +9,5 @@ if (!admin.apps.length) {
 const db = getFirestore();
 
 export { db };
+
+    
