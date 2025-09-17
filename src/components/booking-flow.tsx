@@ -622,6 +622,9 @@ Please check your records for the uploaded receipt.
             <p className="text-sm text-muted-foreground text-center italic">
               A 25% deposit is required to secure your booking. This will be applied to your total service cost.
             </p>
+             <p className="text-sm text-muted-foreground text-center">
+              For users who are not on WhatsApp, you can share your proof of payment and booking info to this email: goodnessabengowe8@gmail.com
+            </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button
@@ -792,3 +795,5 @@ Please check your records for the uploaded receipt.
       return renderPolicy();
   }
 }
+
+    
