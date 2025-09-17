@@ -5,17 +5,10 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import * as admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import { db } from '@/lib/firebase-admin';
 import * as nodemailer from 'nodemailer';
-
-// Ensure Firebase Admin is initialized only once.
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = getFirestore();
-
 
 const NotificationInputSchema = z.object({
     customerName: z.string(),

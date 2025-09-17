@@ -5,13 +5,8 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+import { z } from 'zod';
+import { db } from '@/lib/firebase-admin';
 
 const BookingSchema = z.object({
   id: z.string(),
@@ -34,14 +29,7 @@ const getBookingsFlow = ai.defineFlow(
     outputSchema: GetBookingsOutputSchema,
   },
   async () => {
-    // Ensure Firebase is initialized within the flow execution
-    if (!admin.apps.length) {
-      admin.initializeApp();
-    }
-    const db = admin.firestore();
-
     try {
-      // Order by 'date' and 'time' if 'createdAt' is not reliable
       const bookingsSnapshot = await db.collection('bookings').get();
       const bookings: Booking[] = [];
 
@@ -51,7 +39,6 @@ const getBookingsFlow = ai.defineFlow(
 
       bookingsSnapshot.forEach(doc => {
         const data = doc.data();
-        // Basic validation to ensure core fields exist
         if (data.customerName && data.serviceName && data.date && data.time) {
           bookings.push({
             id: doc.id,
@@ -67,7 +54,6 @@ const getBookingsFlow = ai.defineFlow(
     } catch (error) {
       console.error("Failed to fetch bookings from Firestore:", error);
       // Return an empty array on failure to prevent crashing the client.
-      // The client should handle the case where no bookings are returned.
       return [];
     }
   }
