@@ -92,18 +92,19 @@ const sendNotificationFlow = ai.defineFlow(
       </ul>
        <h2>Add-ons:</h2>
       ${addonsEmail}
-      <p>The client has uploaded their payment receipt. Please check your records.</p>
+      <p>The client has uploaded their payment receipt. Please check the attachment.</p>
     `;
 
     try {
         await transporter.sendMail({
             from: `"F&G Luxury Hair" <${process.env.EMAIL_USER}>`,
             to: "kingsleyfrancis.kalu@gmail.com",
-            subject: `New Booking: ${input.serviceName} for ${input.customerName}`,
+            subject: `New Booking & Receipt From: ${input.customerName}`,
             html: emailHtml,
             attachments: input.receiptDataUri ? [{
                 filename: 'receipt.png',
                 path: input.receiptDataUri,
+                cid: 'receipt'
             }] : [],
         });
         
@@ -123,3 +124,5 @@ const sendNotificationFlow = ai.defineFlow(
     }
   }
 );
+
+    
