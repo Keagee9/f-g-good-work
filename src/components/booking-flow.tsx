@@ -2,7 +2,7 @@
 'use client';
 
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
+import { getBookings, type Booking } from '@/ai/flows/get-bookings-flow';
 
 interface BookingFlowProps {
   serviceCategories: ServiceCategory[];
@@ -59,8 +60,32 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [isNotifying, setIsNotifying] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (step === 'date') {
+      const fetchBookings = async () => {
+        setIsLoadingBookings(true);
+        try {
+          const existingBookings = await getBookings();
+          setBookings(existingBookings);
+        } catch (error) {
+          console.error("Failed to fetch bookings", error);
+          toast({
+            variant: "destructive",
+            title: "Could not load schedule",
+            description: "Failed to fetch existing appointments. Please try refreshing.",
+          });
+        } finally {
+          setIsLoadingBookings(false);
+        }
+      };
+      fetchBookings();
+    }
+  }, [step, toast]);
 
   const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
     setSelectedVariant(variant);
@@ -109,6 +134,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
     setCustomerEmail('');
     setCustomerPhone('');
     setIsNotifying(false);
+    setBookings([]);
   };
 
   const getTotalPrice = () => {
@@ -155,10 +181,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             receiptDataUri: receiptPreview,
         });
 
-        // The flow is now resilient. As long as `success` is true, the booking is saved.
-        // The message will tell us about the status of secondary actions like email.
         if (notificationResult.success) {
-            // Give specific feedback based on the message from the backend.
             if (notificationResult.message.includes("email failed")) {
                  toast({
                     variant: 'destructive',
@@ -179,7 +202,6 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                 });
             }
         } else {
-             // This is a critical failure (e.g., database down).
              toast({
                 variant: 'destructive',
                 title: 'Critical Booking Error',
@@ -187,7 +209,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
                 duration: 9000,
             });
             setIsNotifying(false);
-            return; // Stop the process if the booking wasn't saved.
+            return;
         }
     } catch (error) {
         console.error('Failed to call notification flow:', error);
@@ -197,11 +219,9 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             description: 'Could not communicate with the booking server. Please try again.',
         });
         setIsNotifying(false);
-        return; // Stop the process
+        return;
     }
 
-    // Always trigger WhatsApp notification as a reliable backup.
-    // This part runs only if the booking was successfully saved.
     const phoneNumber = '13234718770';
     const addonsText = selectedAddons.length > 0 
       ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}` 
@@ -229,7 +249,6 @@ Please check your records for the uploaded receipt.
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
     
-    // Move to confirmation step
     setStep('confirmation');
     setIsNotifying(false);
   };
@@ -237,6 +256,19 @@ Please check your records for the uploaded receipt.
   const isUploadFormValid = () => {
     return receiptFile && customerName && customerEmail && customerPhone;
   }
+  
+  const getBookedSlotsForDate = (date: Date) => {
+    const dateString = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+    return bookings
+      .filter(b => b.date === dateString)
+      .map(b => b.time);
+  };
+
 
   const renderPolicy = () => (
     <div className="container py-8 md:py-12 px-4 md:px-6">
@@ -427,6 +459,8 @@ Please check your records for the uploaded receipt.
   const renderDateTimeSelection = () => {
     if (!selectedVariant || !selectedCategory) return null;
 
+    const bookedSlots = selectedDate ? getBookedSlotsForDate(selectedDate) : [];
+
     return (
       <div className="container py-8 px-4 md:px-6">
         <Button variant="ghost" onClick={() => setStep('addons')} className="mb-4">
@@ -496,7 +530,11 @@ Please check your records for the uploaded receipt.
                     className="rounded-md border"
                   />
                 </div>
-                {selectedDate && (
+                {isLoadingBookings ? (
+                    <div className="flex-1 w-full flex items-center justify-center">
+                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    </div>
+                ) : selectedDate && (
                   <div className="flex-1 w-full">
                     <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-primary">
                       Available Times for{' '}
@@ -507,15 +545,19 @@ Please check your records for the uploaded receipt.
                       })}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {availableTimes.map(time => (
-                        <Button
-                          key={time}
-                          variant="outline"
-                          onClick={() => handleTimeSelect(time)}
-                        >
-                          {time}
-                        </Button>
-                      ))}
+                      {availableTimes.map(time => {
+                        const isBooked = bookedSlots.includes(time);
+                        return (
+                            <Button
+                            key={time}
+                            variant="outline"
+                            onClick={() => handleTimeSelect(time)}
+                            disabled={isBooked}
+                            >
+                            {time}
+                            </Button>
+                        );
+                       })}
                     </div>
                   </div>
                 )}
