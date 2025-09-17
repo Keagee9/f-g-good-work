@@ -155,41 +155,59 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             receiptDataUri: receiptPreview,
         });
 
+        // The flow is now resilient. As long as `success` is true, the booking is saved.
+        // The message will tell us about the status of secondary actions like email.
         if (notificationResult.success) {
-            if (notificationResult.message.includes("Skipping email")) {
+            // Give specific feedback based on the message from the backend.
+            if (notificationResult.message.includes("email failed")) {
                  toast({
-                    title: 'Booking Almost Complete!',
-                    description: "Your booking is saved. Email notifications are not set up, so please proceed with WhatsApp.",
+                    variant: 'destructive',
+                    title: 'Booking Saved, Email Failed',
+                    description: "Your booking is confirmed, but the email notification could not be sent. Please proceed with WhatsApp.",
+                    duration: 9000,
                 });
-            } else {
+            } else if (notificationResult.message.includes("not configured")) {
+                 toast({
+                    title: 'Booking Saved, Email Skipped',
+                    description: "Your booking is confirmed. Email notifications are not set up by the admin.",
+                });
+            }
+            else {
                 toast({
                     title: 'Success!',
-                    description: 'Booking saved and email notification sent successfully.',
+                    description: 'Your booking has been saved and a confirmation email has been sent.',
                 });
             }
         } else {
+             // This is a critical failure (e.g., database down).
              toast({
                 variant: 'destructive',
-                title: 'Notification Failed',
-                description: notificationResult.message,
+                title: 'Critical Booking Error',
+                description: notificationResult.message || "Could not save the booking. Please try again.",
                 duration: 9000,
             });
+            setIsNotifying(false);
+            return; // Stop the process if the booking wasn't saved.
         }
     } catch (error) {
-        console.error('Failed to save booking or send notification:', error);
+        console.error('Failed to call notification flow:', error);
         toast({
             variant: 'destructive',
-            title: 'An Error Occurred',
-            description: 'Could not save the booking or send notifications. Please try again.',
+            title: 'An Unexpected Error Occurred',
+            description: 'Could not communicate with the booking server. Please try again.',
         });
-    } finally {
-        // ALWAYS trigger WhatsApp notification
-        const phoneNumber = '13234718770';
-        const addonsText = selectedAddons.length > 0 
-          ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}` 
-          : '\nAdd-ons: None';
+        setIsNotifying(false);
+        return; // Stop the process
+    }
 
-        const message = `
+    // Always trigger WhatsApp notification as a reliable backup.
+    // This part runs only if the booking was successfully saved.
+    const phoneNumber = '13234718770';
+    const addonsText = selectedAddons.length > 0 
+      ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}` 
+      : '\nAdd-ons: None';
+
+    const message = `
 *New Booking Notification!*
 
 A client has booked an appointment and uploaded their payment receipt.
@@ -208,13 +226,12 @@ A client has booked an appointment and uploaded their payment receipt.
 Please check your records for the uploaded receipt.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-        window.open(whatsappUrl, '_blank');
-        
-        // Move to confirmation step
-        setStep('confirmation');
-        setIsNotifying(false);
-    }
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    // Move to confirmation step
+    setStep('confirmation');
+    setIsNotifying(false);
   };
 
   const isUploadFormValid = () => {

@@ -40,7 +40,7 @@ const sendNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // 1. Save booking to Firestore
+    // Step 1: Save booking to Firestore. This is the most critical step.
     try {
         const bookingData = {
             ...input,
@@ -53,21 +53,20 @@ const sendNotificationFlow = ai.defineFlow(
         }
 
         const bookingRef = await db.collection('bookings').add(bookingData);
-        console.log('Booking saved with ID:', bookingRef.id);
+        console.log('Booking saved successfully with ID:', bookingRef.id);
     } catch (error) {
-        console.error("Failed to save booking to Firestore:", error);
-        // We can still proceed with notifications even if DB save fails
-        // but we'll return a message indicating the partial failure.
-        return { success: false, message: "Booking could not be saved to the database, but we will still attempt to send notifications." };
+        console.error("CRITICAL: Failed to save booking to Firestore:", error);
+        // If we can't save the booking, we must stop and report the error.
+        return { success: false, message: "A critical error occurred while trying to save your booking. Please try again." };
     }
 
-    // 2. Send Email Notification
+    // Step 2: Attempt to send email notification. This is non-critical.
     // Check for required environment variables for email
     if (!process.env.EMAIL_HOST || !process.env.EMAIL_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        const message = "Email notifications are not configured. Please set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, and EMAIL_PASS in your .env file to enable them. Skipping email notification.";
+        const message = "Booking saved successfully. Email notifications are not configured on the server. Please proceed with WhatsApp notification.";
         console.warn(message);
-        // Still return success so the WhatsApp flow can continue
-        return { success: true, message: "Booking saved. " + message }; 
+        // Return success because the booking was saved.
+        return { success: true, message: message }; 
     }
 
     const transporter = nodemailer.createTransport({
@@ -117,16 +116,19 @@ const sendNotificationFlow = ai.defineFlow(
             }] : [],
         });
         
+        // Success, booking saved and email sent.
         return { success: true, message: "Booking saved and email notification sent successfully." };
 
     } catch (error) {
         console.error("Failed to send email:", error);
-        // Return a specific error message to the user
+        
+        // IMPORTANT: Still return success=true because the booking was saved.
+        // The message will inform the user about the email issue.
         const errorMessage = (error as Error).message.includes('Invalid login') 
-            ? "Booking saved, but failed to send email: Authentication failed. Please check your EMAIL_USER and EMAIL_PASS in the .env file. If using Gmail, ensure you are using a 16-digit App Password."
-            : `Booking saved, but failed to send email notification. Please check server logs and that your environment variables are correct.`;
+            ? "Booking saved, but email failed: Authentication error. Check server credentials. Please proceed with WhatsApp notification."
+            : `Booking saved, but the email notification could not be sent. Please proceed with WhatsApp notification.`;
 
-        return { success: false, message: errorMessage };
+        return { success: true, message: errorMessage };
     }
   }
 );
