@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import *d from 'firebase-admin/firestore';
+import * as d from 'firebase-admin/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import { app } from '@/lib/firebase-admin'; // Using admin app
 import * as nodemailer from 'nodemailer';
