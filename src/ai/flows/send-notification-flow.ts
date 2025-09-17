@@ -3,6 +3,8 @@
 /**
  * @fileOverview A flow for sending booking notifications and saving bookings to Firestore.
  */
+import { config } from 'dotenv';
+config();
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
@@ -46,7 +48,9 @@ const sendNotificationFlow = ai.defineFlow(
             status: 'confirmed', // Default status
         };
         // We don't want to store the large image data URI in the main document
-        delete bookingData.receiptDataUri;
+        if ('receiptDataUri' in bookingData) {
+            delete (bookingData as Partial<typeof bookingData>).receiptDataUri;
+        }
 
         const bookingRef = await db.collection('bookings').add(bookingData);
         console.log('Booking saved with ID:', bookingRef.id);
@@ -63,7 +67,7 @@ const sendNotificationFlow = ai.defineFlow(
         const message = "Email notifications are not configured. Please set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, and EMAIL_PASS in your .env file to enable them. Skipping email notification.";
         console.warn(message);
         // Still return success so the WhatsApp flow can continue
-        return { success: true, message: message }; 
+        return { success: true, message: "Booking saved. " + message }; 
     }
 
     const transporter = nodemailer.createTransport({
