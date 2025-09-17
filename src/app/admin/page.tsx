@@ -19,12 +19,18 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, LogOut } from 'lucide-react';
+import { AuthGuard } from '@/components/auth-guard';
+import { Button } from '@/components/ui/button';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
-export default function AdminPage() {
+function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchBookings() {
@@ -43,11 +49,20 @@ export default function AdminPage() {
     fetchBookings();
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/admin/login');
+    } catch (error) {
+      console.error('Error signing out: ', error);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center px-4 md:px-6">
-            <div className="mr-4 flex items-center">
+        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+            <div className="flex items-center">
              <svg
               xmlns="http://www.w3.org/2000/svg"
               width="40"
@@ -65,6 +80,10 @@ export default function AdminPage() {
             </svg>
             <h1 className="text-xl md:text-2xl font-bold font-headline text-foreground">F&G Luxury Hair - Admin Panel</h1>
           </div>
+           <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
       </header>
       <main className="flex-1 container py-8 md:py-12 px-4 md:px-6">
@@ -138,4 +157,12 @@ export default function AdminPage() {
       </main>
     </div>
   );
+}
+
+export default function AdminPage() {
+    return (
+        <AuthGuard>
+            <AdminDashboard />
+        </AuthGuard>
+    )
 }
