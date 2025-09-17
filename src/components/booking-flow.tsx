@@ -159,28 +159,28 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             if (notificationResult.message.includes("Skipping email")) {
                  toast({
                     title: 'Booking Almost Complete!',
-                    description: "Email notifications are not set up. Please proceed with WhatsApp.",
+                    description: "Your booking is saved. Email notifications are not set up, so please proceed with WhatsApp.",
                 });
             } else {
                 toast({
                     title: 'Success!',
-                    description: 'Email notification sent successfully.',
+                    description: 'Booking saved and email notification sent successfully.',
                 });
             }
         } else {
              toast({
                 variant: 'destructive',
-                title: 'Email Failed',
+                title: 'Notification Failed',
                 description: notificationResult.message,
                 duration: 9000,
             });
         }
     } catch (error) {
-        console.error('Failed to send notification:', error);
+        console.error('Failed to save booking or send notification:', error);
         toast({
             variant: 'destructive',
             title: 'An Error Occurred',
-            description: 'Could not send the email notification. Please try again.',
+            description: 'Could not save the booking or send notifications. Please try again.',
         });
     } finally {
         // ALWAYS trigger WhatsApp notification

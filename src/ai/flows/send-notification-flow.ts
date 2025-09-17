@@ -1,12 +1,17 @@
 
 'use server';
 /**
- * @fileOverview A flow for sending booking notifications.
+ * @fileOverview A flow for sending booking notifications and saving bookings to Firestore.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import *d from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
+import { app } from '@/lib/firebase-admin'; // Using admin app
 import * as nodemailer from 'nodemailer';
+
+const db = getFirestore(app);
 
 const NotificationInputSchema = z.object({
     customerName: z.string(),
@@ -33,6 +38,26 @@ const sendNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     
+    // 1. Save booking to Firestore
+    try {
+        const bookingData = {
+            ...input,
+            createdAt: d.FieldValue.serverTimestamp(), // Add a server timestamp
+            status: 'confirmed', // Default status
+        };
+        // We don't want to store the large image data URI in the main document
+        delete bookingData.receiptDataUri;
+
+        const bookingRef = await db.collection('bookings').add(bookingData);
+        console.log('Booking saved with ID:', bookingRef.id);
+    } catch (error) {
+        console.error("Failed to save booking to Firestore:", error);
+        // We can still proceed with notifications even if DB save fails
+        // but we'll return a message indicating the partial failure.
+        return { success: false, message: "Booking could not be saved to the database, but we will still attempt to send notifications." };
+    }
+
+    // 2. Send Email Notification
     // Check for required environment variables for email
     if (!process.env.EMAIL_HOST || !process.env.EMAIL_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         const message = "Email notifications are not configured. Please set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, and EMAIL_PASS in your .env file to enable them. Skipping email notification.";
@@ -41,7 +66,6 @@ const sendNotificationFlow = ai.defineFlow(
         return { success: true, message: message }; 
     }
 
-    // Email Notification
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: parseInt(process.env.EMAIL_PORT, 10),
@@ -89,14 +113,14 @@ const sendNotificationFlow = ai.defineFlow(
             }] : [],
         });
         
-        return { success: true, message: "Email notification sent successfully." };
+        return { success: true, message: "Booking saved and email notification sent successfully." };
 
     } catch (error) {
         console.error("Failed to send email:", error);
         // Return a specific error message to the user
         const errorMessage = (error as Error).message.includes('Invalid login') 
-            ? "Failed to send email: Authentication failed. Please check your EMAIL_USER and EMAIL_PASS in the .env file. If using Gmail, ensure you are using a 16-digit App Password."
-            : `Failed to send email notification. Please check server logs and that your environment variables are correct.`;
+            ? "Booking saved, but failed to send email: Authentication failed. Please check your EMAIL_USER and EMAIL_PASS in the .env file. If using Gmail, ensure you are using a 16-digit App Password."
+            : `Booking saved, but failed to send email notification. Please check server logs and that your environment variables are correct.`;
 
         return { success: false, message: errorMessage };
     }
