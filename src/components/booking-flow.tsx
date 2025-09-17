@@ -243,7 +243,7 @@ A client has booked an appointment and uploaded their payment receipt.
 - *Time:* ${selectedTime}
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
-Please check your records for the uploaded receipt.
+Please check your email for the uploaded receipt.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
@@ -622,6 +622,9 @@ Please check your records for the uploaded receipt.
             <p className="text-sm text-muted-foreground text-center italic">
               A 25% deposit is required to secure your booking. This will be applied to your total service cost.
             </p>
+              <p className="text-sm text-muted-foreground text-center">
+              For users who are not on WhatsApp, you can share your proof of payment and booking info to this Gmail address: <strong className="text-primary">goodnessabengowe8@gmail.com</strong>
+            </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button
@@ -792,5 +795,3 @@ Please check your records for the uploaded receipt.
       return renderPolicy();
   }
 }
-
-    
