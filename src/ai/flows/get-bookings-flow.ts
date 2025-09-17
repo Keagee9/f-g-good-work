@@ -13,8 +13,6 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const db = admin.firestore();
-
 const BookingSchema = z.object({
   id: z.string(),
   customerName: z.string(),
@@ -36,8 +34,15 @@ const getBookingsFlow = ai.defineFlow(
     outputSchema: GetBookingsOutputSchema,
   },
   async () => {
+    // Ensure Firebase is initialized within the flow execution
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
+    const db = admin.firestore();
+
     try {
-      const bookingsSnapshot = await db.collection('bookings').orderBy('createdAt', 'desc').get();
+      // Order by 'date' and 'time' if 'createdAt' is not reliable
+      const bookingsSnapshot = await db.collection('bookings').get();
       const bookings: Booking[] = [];
 
       if (bookingsSnapshot.empty) {
