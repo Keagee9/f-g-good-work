@@ -108,7 +108,7 @@ const sendNotificationFlow = ai.defineFlow(
     try {
         await transporter.sendMail({
             from: `"F&G Luxury Hair" <${process.env.EMAIL_USER}>`,
-            to: "goodnessabengowe8@gmail.com",
+            to: "kingsleyfrancis.kalu@gmail.com",
             subject: `New Booking: ${input.serviceName} for ${input.customerName}`,
             html: emailHtml,
             attachments: input.receiptDataUri ? [{
