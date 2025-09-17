@@ -139,9 +139,11 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
         month: 'long',
         day: 'numeric',
     });
+
+    let notificationResult: { success: boolean; message: string } | null = null;
     
     try {
-        const result = await sendNotification({
+        notificationResult = await sendNotification({
             customerName,
             customerEmail,
             customerPhone,
@@ -153,20 +155,35 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             receiptDataUri: receiptPreview,
         });
 
-        if (result.success) {
-            toast({
-                title: 'Success!',
-                description: 'Email notification sent successfully.',
-            });
+        if (notificationResult.success) {
+            if (notificationResult.message.includes("Skipping email")) {
+                 toast({
+                    title: 'Booking Almost Complete!',
+                    description: "Email notifications are not set up. Please proceed with WhatsApp.",
+                });
+            } else {
+                toast({
+                    title: 'Success!',
+                    description: 'Email notification sent successfully.',
+                });
+            }
         } else {
              toast({
                 variant: 'destructive',
                 title: 'Email Failed',
-                description: result.message,
+                description: notificationResult.message,
+                duration: 9000,
             });
         }
-
-        // Generate WhatsApp message
+    } catch (error) {
+        console.error('Failed to send notification:', error);
+        toast({
+            variant: 'destructive',
+            title: 'An Error Occurred',
+            description: 'Could not send the email notification. Please try again.',
+        });
+    } finally {
+        // ALWAYS trigger WhatsApp notification
         const phoneNumber = '13234718770';
         const addonsText = selectedAddons.length > 0 
           ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}` 
@@ -189,21 +206,13 @@ A client has booked an appointment and uploaded their payment receipt.
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
 Please check your records for the uploaded receipt.
-`.trim();
+`.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         
+        // Move to confirmation step
         setStep('confirmation');
-
-    } catch (error) {
-        console.error('Failed to send notification:', error);
-        toast({
-            variant: 'destructive',
-            title: 'An Error Occurred',
-            description: 'Could not complete the booking process. Please try again.',
-        });
-    } finally {
         setIsNotifying(false);
     }
   };
@@ -253,7 +262,7 @@ Please check your records for the uploaded receipt.
             <li>
               If you are picky, have a bad attitude, or bring bad stress to our business because you are not clear with what you want, we will not service you. Your deposit will be forfeited.
             </li>
-<li>All no-calls/no-shows will be charged, and your deposit will be forfeited.</li>
+            <li>All no-calls/no-shows will be charged, and your deposit will be forfeited.</li>
             <li>
               Hair must be washed, detangled, and properly blown out.
             </li>
@@ -636,7 +645,7 @@ Please check your records for the uploaded receipt.
                     </>
                 ) : (
                     <>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2"><path d="M16.75 13.96c.25.13.43.2.5.28.08.08.13.18.15.25.03.08.03.18 0 .28-.03.1-.08.18-.13.2-.05.03-.13.05-.2.05-.08 0-.15-.03-.23-.05-.08-.03-.18-.05-.25-.08-.1-.03-.2-.08-.33-.13-.13-.05-.25-.1-.38-.18-.13-.08-.25-.15-.38-.25-.13-.1-.25-.2-.4-.3-.15-.1-.28-.2-.43-.33-.15-.13-.25-.25-.4-.4-.13-.15-.25-.3-.35-.45-.1-.15-.18-.3-.25-.45-.05-.15-.1-.3-.13-.45-.03-.15-.05-.3-.05-.45s0-.28.03-.4.05-.2.08-.25c.03-.05.08-.1.13-.13.05-.03.1-.05.15-.05.05 0 .1.02.15.03l.18.05c.05.02.1.03.13.05.03.02.05.03.08.05s.05.05.08.08c.02.03.05.07.08.1.02.03.05.07.08.1.03.05.05.08.07.13.02.05.03.1.03.15s-.02.1-.03.13c-.02.03-.03.07-.05.1-.02.03-.05.05-.08.08-.03.03-.05.05-.08.07l-.1.05c-.02.02-.03.02-.05.02-.02 0-.03-.02-.05-.03-.02-.02-.05-.03-.08-.05-.15-.08-.3-.18-.45-.3-.15-.13-.28-.25-.4-.4-.13-.15-.25-.3-.35-.48-.1-.18-.18-.35-.23-.55-.05-.2-.08-.4-.08-.6s.03-.38.08-.53c.05-.15.13-.28.2-.4.08-.13.18-.23.28-.3.1-.08.2-.13.3-.15.1-.03.2-.03.28-.03.08 0 .15.02.23.05.08.03.15.07.23.1.08.05.15.08.2.13.08.08.13.15.18.2.05.05.08.1.1.15.03.05.05.1.07.15.02.05.03.1.03.13.02.03.02.05.02.08s-.02.07-.03.08c-.02.02-.03.03-.05.05-.02.02-.05.03-.08.05l-.13.05c-.03.02-.05.02-.07.02-.02 0-.05-.02-.07-.03l-.1-.08c-.03-.03-.05-.05-.08-.07-.03-.02-.05-.05-.08-.07-.03-.03-.07-.05-.1-.08-.15-.1-.3-.2-.48-.25-.18-.05-.35-.08-.53-.08-1.4 0-2.6.48-3.6 1.45-1 .98-1.5 2.15-1.5 3.55 0 .6.13 1.15.38 1.65.25.5.58.95.98 1.35.4.4.85.73 1.35.98.5.25 1.05.38 1.65.38.35 0 .68-.05 1-.13.33-.08.63-.2.9-.38.28-.18.5-.38.7-.6.2-.23.38-.48.5-.75l.2-.45c.03-.08.05-.15.08-.23.03-.08.07-.15.1-.23.05-.08.1-.15.15-.23.05-.08.1-.15.15-.2h.13c.05 0 .1 0 .1.02.03.02.05.03.08.05.02.02.05.05.08.07l.25.25c.08.08.15.15.2.2.08.05.13.1.18.13h.05c.05 0 .1 0 .13-.02.03-.02.05-.03.07-.05l.23-.2c.08-.08.15-.15.2-.23.05-.08.1-.18.13-.25.03-.08.05-.18.05-.28s-.02-.2-.05-.28-.08-.15-.13-.2z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2"><path d="M16.75 13.96c.25.13.43.2.5.28.08.08.13.18.15.25.03.08.03.18 0 .28-.03.1-.08.18-.13.2-.05.03-.13.05-.2.05-.08 0-.15-.03-.23-.05-.08-.03-.18-.05-.25-.08-.1-.03-.2-.08-.33-.13-.13-.05-.25-.1-.38-.18-.13-.08-.25-.15-.38-.25-.13-.1-.25-.2-.4-.3-.15-.1-.28-.2-.43-.33-.15-.13-.28-.25-.4-.4-.13-.15-.25-.3-.35-.45-.1-.15-.18-.3-.25-.45-.05-.15-.1-.3-.13-.45-.03-.15-.05-.3-.05-.45s0-.28.03-.4.05-.2.08-.25c.03-.05.08-.1.13-.13.05-.03.1-.05.15-.05.05 0 .1.02.15.03l.18.05c.05.02.1.03.13.05.03.02.05.03.08.05s.05.05.08.08c.02.03.05.07.08.1.02.03.05.07.08.1.03.05.05.08.07.13.02.05.03.1.03.15s-.02.1-.03.13c-.02.03-.03.07-.05.1-.02.03-.05.05-.08.08-.03.03-.05.05-.08.07l-.1.05c-.02.02-.03.02-.05.02-.02 0-.03-.02-.05-.03-.02-.02-.05-.03-.08-.05-.15-.08-.3-.18-.45-.3-.15-.13-.28-.25-.4-.4-.13-.15-.25-.3-.35-.48-.1-.18-.18-.35-.23-.55-.05-.2-.08-.4-.08-.6s.03-.38.08-.53c.05-.15.13-.28.2-.4.08-.13.18-.23.28-.3.1-.08.2-.13.3-.15.1-.03.2-.03.28-.03.08 0 .15.02.23.05.08.03.15.07.23.1.08.05.15.08.2.13.08.08.13.15.18.2.05.05.08.1.1.15.03.05.05.1.07.15.02.05.03.1.03.13.02.03.02.05.02.08s-.02.07-.03.08c-.02.02-.03.03-.05.05-.02.02-.05.03-.08.05l-.13.05c-.03.02-.05.02-.07.02-.02 0-.05-.02-.07-.03l-.1-.08c-.03-.03-.05-.05-.08-.07-.03-.02-.05-.05-.08-.07-.03-.03-.07-.05-.1-.08-.15-.1-.3-.2-.48-.25-.18-.05-.35-.08-.53-.08-1.4 0-2.6.48-3.6 1.45-1 .98-1.5 2.15-1.5 3.55 0 .6.13 1.15.38 1.65.25.5.58.95.98 1.35.4.4.85.73 1.35.98.5.25 1.05.38 1.65.38.35 0 .68-.05 1-.13.33-.08.63-.2.9-.38.28-.18.5-.38.7-.6.2-.23.38-.48.5-.75l.2-.45c.03-.08.05-.15.08-.23.03-.08.07-.15.1-.23.05-.08.1-.15.15-.23.05-.08.1-.15.15-.2h.13c.05 0 .1 0 .1.02.03.02.05.03.08.05.02.02.05.05.08.07l.25.25c.08.08.15.15.2.2.08.05.13.1.18.13h.05c.05 0 .1 0 .13-.02.03-.02.05-.03.07-.05l.23-.2c.08-.08.15-.15.2-.23.05-.08.1-.18.13-.25.03-.08.05-.18.05-.28s-.02-.2-.05-.28-.08-.15-.13-.2z" /></svg>
                         Send Notification & Confirm Booking
                     </>
                 )}

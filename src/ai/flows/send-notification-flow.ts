@@ -33,11 +33,12 @@ const sendNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Check for required environment variables
+    // Check for required environment variables for email
     if (!process.env.EMAIL_HOST || !process.env.EMAIL_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        const message = "Email environment variables (EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS) are not set. Please configure them in your .env file to enable email notifications.";
-        console.error(message);
-        return { success: false, message: message };
+        const message = "Email notifications are not configured. Please set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, and EMAIL_PASS in your .env file to enable them. Skipping email notification.";
+        console.warn(message);
+        // Still return success so the WhatsApp flow can continue
+        return { success: true, message: message }; 
     }
 
     // Email Notification
@@ -92,7 +93,12 @@ const sendNotificationFlow = ai.defineFlow(
 
     } catch (error) {
         console.error("Failed to send email:", error);
-        return { success: false, message: "Failed to send email notification. Please check server logs and that your environment variables are correct." };
+        // Return a specific error message to the user
+        const errorMessage = (error as Error).message.includes('Invalid login') 
+            ? "Failed to send email: Authentication failed. Please check your EMAIL_USER and EMAIL_PASS in the .env file. If using Gmail, ensure you are using a 16-digit App Password."
+            : `Failed to send email notification. Please check server logs and that your environment variables are correct.`;
+
+        return { success: false, message: errorMessage };
     }
   }
 );
