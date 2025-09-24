@@ -11,5 +11,6 @@ function getAdminApp() {
 }
 
 export function getDb() {
+  // Call getAdminApp to ensure initialization before getting Firestore.
   return getFirestore(getAdminApp());
 }
