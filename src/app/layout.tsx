@@ -28,7 +28,9 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased min-h-screen bg-background')}>
-        {children}
+        <div className="max-w-screen-2xl mx-auto">
+          {children}
+        </div>
         <Toaster />
       </body>
     </html>
