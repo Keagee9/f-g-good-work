@@ -673,7 +673,7 @@ Please check your email for the uploaded receipt.
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" placeholder="Your email address" value={customerEmail} onChange={e => setEmail(e.target.value)} required />
+              <Input id="email" type="email" placeholder="Your email address" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} required />
             </div>
 
             <Separator />
