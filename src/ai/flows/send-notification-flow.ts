@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import * as admin from 'firebase-admin';
+import { getDb } from '@/lib/firebase-admin';
 import * as nodemailer from 'nodemailer';
 
 const NotificationInputSchema = z.object({
@@ -33,17 +33,15 @@ const sendNotificationFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
-    // Ensure Firebase is initialized only once.
-    if (admin.apps.length === 0) {
-      admin.initializeApp({ projectId: 'studio-2472646169-beca8' });
-    }
-    const db = admin.firestore();
+    const db = getDb();
     
     // Step 1: Save booking to Firestore. This is the most critical step.
     try {
         const bookingData = {
             ...input,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(), // Add a server timestamp
+            // Cannot use serverTimestamp here as it's not JSON-serializable for the flow's input/output.
+            // Using a simple ISO string.
+            createdAt: new Date().toISOString(), 
             status: 'confirmed', // Default status
         };
 

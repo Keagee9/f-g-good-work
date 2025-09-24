@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import * as admin from 'firebase-admin';
+import { getDb } from '@/lib/firebase-admin';
 
 const BookingSchema = z.object({
   id: z.string(),
@@ -29,11 +29,7 @@ const getBookingsFlow = ai.defineFlow(
     outputSchema: GetBookingsOutputSchema,
   },
   async () => {
-    // Ensure Firebase is initialized only once.
-    if (admin.apps.length === 0) {
-      admin.initializeApp({ projectId: 'studio-2472646169-beca8' });
-    }
-    const db = admin.firestore();
+    const db = getDb();
     
     try {
       const bookingsSnapshot = await db.collection('bookings').get();
