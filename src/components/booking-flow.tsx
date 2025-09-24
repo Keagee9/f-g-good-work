@@ -252,7 +252,7 @@ A client has booked an appointment and uploaded their payment receipt.
 - *Time:* ${selectedTime}
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
-Please check your email for the uploaded receipt. The receipt is also attached to this message.
+Please check your email for the uploaded receipt.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
