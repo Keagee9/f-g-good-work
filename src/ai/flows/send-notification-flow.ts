@@ -35,7 +35,7 @@ const sendNotificationFlow = ai.defineFlow(
   async (input) => {
     // Ensure Firebase is initialized only once.
     if (admin.apps.length === 0) {
-      admin.initializeApp();
+      admin.initializeApp({ projectId: 'studio-2472646169-beca8' });
     }
     const db = admin.firestore();
     
