@@ -8,7 +8,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
-import { getDb } from '@/lib/firebase-admin';
 
 const NotificationInputSchema = z.object({
     customerName: z.string(),
@@ -34,7 +33,11 @@ const sendNotificationFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
-    const db = getDb();
+    // Ensure Firebase is initialized only once.
+    if (admin.apps.length === 0) {
+      admin.initializeApp();
+    }
+    const db = admin.firestore();
     
     // Step 1: Save booking to Firestore. This is the most critical step.
     try {
