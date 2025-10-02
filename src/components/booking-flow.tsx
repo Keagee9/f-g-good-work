@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
@@ -35,7 +34,6 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { sendNotification } from '@/ai/flows/send-notification-flow';
 import { app } from '@/lib/firebase';
 import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
 
@@ -68,7 +66,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [isNotifying, setIsNotifying] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
@@ -147,7 +145,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
     setCustomerName('');
     setCustomerEmail('');
     setCustomerPhone('');
-    setIsNotifying(false);
+    setIsConfirming(false);
     setBookings([]);
   };
 
@@ -178,7 +176,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
         });
         return;
     }
-    setIsNotifying(true);
+    setIsConfirming(true);
 
     const dateStr = selectedDate.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -203,25 +201,10 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             createdAt: Timestamp.now(),
             status: 'confirmed',
         };
-        await addDoc(collection(db, "bookings"), bookingData);
-        toast({
-            title: 'Booking Saved!',
-            description: 'Your appointment has been successfully saved.',
-        });
+        
+        const saveBookingPromise = addDoc(collection(db, "bookings"), bookingData);
 
-        // Step 2: Trigger server-side notification flow (for WhatsApp)
-        await sendNotification({
-            customerName,
-            customerEmail,
-            customerPhone,
-            serviceName: selectedVariant.name,
-            date: dateStr,
-            time: selectedTime,
-            totalPrice: getTotalPrice(),
-            addons: selectedAddons.map(a => a.name),
-        });
-
-        // Step 3: Open WhatsApp link
+        // Step 2: Open WhatsApp link immediately
         const phoneNumber = '2348102505732';
         const addonsText = selectedAddons.length > 0
           ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}`
@@ -249,6 +232,14 @@ Please check your email for the uploaded receipt.
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
         window.open(whatsappUrl, '_blank');
         
+        // Step 3: Wait for booking to save, then show confirmation
+        await saveBookingPromise;
+
+        toast({
+            title: 'Booking Saved!',
+            description: 'Your appointment has been successfully saved.',
+        });
+        
         setStep('confirmation');
 
     } catch (error) {
@@ -259,7 +250,7 @@ Please check your email for the uploaded receipt.
             description: 'Could not complete the booking process. Please try again.',
         });
     } finally {
-        setIsNotifying(false);
+        setIsConfirming(false);
     }
   };
 
@@ -709,8 +700,8 @@ Please check your email for the uploaded receipt.
             )}
           </CardContent>
           <CardFooter>
-            <Button onClick={handleConfirmation} disabled={!isUploadFormValid() || isNotifying} className="w-full" size="lg">
-                {isNotifying ? (
+            <Button onClick={handleConfirmation} disabled={!isUploadFormValid() || isConfirming} className="w-full" size="lg">
+                {isConfirming ? (
                     <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Confirming...
@@ -805,3 +796,5 @@ Please check your email for the uploaded receipt.
       return renderPolicy();
   }
 }
+
+    

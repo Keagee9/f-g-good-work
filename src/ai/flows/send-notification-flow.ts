@@ -22,7 +22,10 @@ const NotificationInputSchema = z.object({
 export type NotificationInput = z.infer<typeof NotificationInputSchema>;
 
 export async function sendNotification(input: NotificationInput): Promise<{ success: boolean; message: string }> {
-    return sendNotificationFlow(input);
+    // This function is no longer needed as the WhatsApp link is opened directly.
+    // However, we can keep the flow in case we want to add other notifications (e.g., email) later.
+    console.log('Notification data prepared:', input);
+    return Promise.resolve({ success: true, message: 'Client-side notification handled.' });
 }
 
 const sendNotificationFlow = ai.defineFlow(
@@ -32,10 +35,12 @@ const sendNotificationFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
-    // This flow no longer saves to Firestore.
-    // It just confirms that the notification logic was triggered.
-    // The actual WhatsApp message is constructed and opened on the client.
-    console.log('Notification flow triggered for:', input.customerName);
-    return { success: true, message: "Notification flow executed successfully." };
+    // This flow no longer saves to Firestore and is not awaited by the client.
+    // It's here for potential future use (e.g., sending an email confirmation).
+    console.log('Server-side notification flow triggered for:', input.customerName);
+    // For example, one could add an email sending service here.
+    return { success: true, message: "Server-side flow executed successfully." };
   }
 );
+
+    
