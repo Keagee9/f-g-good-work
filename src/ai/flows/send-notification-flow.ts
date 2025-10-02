@@ -9,24 +9,6 @@ import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
 
-
-// This is a "singleton" pattern. It ensures that we only initialize
-// the Firebase Admin SDK once, preventing errors from trying to
-// re-initialize it on every server-side render in Next.js.
-function getDb(): admin.firestore.Firestore {
-  // If the app is already initialized, return the existing instance.
-  if (admin.apps.length > 0) {
-    return admin.app().firestore();
-  }
-  
-  // If the app is not initialized, create a new instance and return it.
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-  });
-  return admin.app().firestore();
-}
-
-
 const NotificationInputSchema = z.object({
     customerName: z.string(),
     customerEmail: z.string(),
@@ -51,7 +33,15 @@ const sendNotificationFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), message: z.string() }),
   },
   async (input) => {
-    const db = getDb();
+    // This is a "singleton" pattern. It ensures that we only initialize
+    // the Firebase Admin SDK once, preventing errors from trying to
+    // re-initialize it on every server-side render in Next.js.
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+    }
+    const db = admin.firestore();
     
     // Step 1: Save booking to Firestore. This is the most critical step.
     try {
