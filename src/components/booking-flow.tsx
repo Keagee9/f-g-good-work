@@ -20,7 +20,7 @@ import {
   Copy,
   CreditCard,
   Home,
-  PartyPopper,
+  Mail,
   Loader2,
   Wand2,
 } from 'lucide-react';
@@ -236,8 +236,8 @@ Please check your email for the uploaded receipt.
         await saveBookingPromise;
 
         toast({
-            title: 'Booking Saved!',
-            description: 'Your appointment has been successfully saved.',
+            title: 'Booking Info Sent!',
+            description: 'Your appointment request has been sent successfully.',
         });
         
         setStep('confirmation');
@@ -728,49 +728,26 @@ Please check your email for the uploaded receipt.
     if (!selectedVariant || !selectedDate || !selectedTime) return null;
     return (
       <div className="container py-12 flex justify-center items-center px-4 md:px-6">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center items-center">
-            <PartyPopper className="w-16 h-16 text-foreground mb-4" />
+        <Card className="w-full max-w-2xl text-center">
+          <CardHeader className="items-center">
+            <Mail className="w-16 h-16 text-foreground mb-4" />
             <CardTitle className="text-2xl md:text-3xl font-headline text-primary">
-              Booking Confirmed!
+              Your Booking Request is Sent!
             </CardTitle>
             <CardDescription className="text-muted-foreground px-4">
-              Your appointment is set. We look forward to seeing you.
+              Thank you for your booking. Your information has been sent.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className="border rounded-lg p-4 space-y-3">
-               <h3 className="font-semibold text-lg text-primary">{selectedVariant.name}</h3>
-                {selectedAddons.length > 0 && (
-                    <div>
-                        <h4 className="font-semibold text-primary/80 text-sm">Add-ons:</h4>
-                        <ul className="list-disc list-inside text-muted-foreground text-sm pl-4">
-                            {selectedAddons.map(addon => (
-                                <li key={addon.id}>{addon.name}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-               <p className="text-muted-foreground flex items-center">
-                <CalendarDays className="w-4 h-4 mr-2" />
-                {selectedDate.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}{' '}
-                at {selectedTime}
-              </p>
-               <p className="text-muted-foreground flex items-center">
-                <Clock className="w-4 h-4 mr-2" />
-                {selectedVariant.duration}
-              </p>
-              <Separator />
-               <p className="font-bold text-lg text-foreground flex items-center justify-between">
-                <span>Total Amount:</span>
-                <span>${getTotalPrice().toFixed(2)}</span>
-              </p>
+             <div className="border rounded-lg p-6 space-y-3 bg-card">
+               <h3 className="font-bold text-xl text-primary">We will get back to you in 30min</h3>
+               <p className="text-muted-foreground">
+                 We've received your appointment request and payment details. Our team will review it and confirm your booking shortly.
+               </p>
              </div>
+             <p className="text-sm text-muted-foreground pt-4">
+                You can now close this page.
+            </p>
           </CardContent>
           <CardFooter>
             <Button onClick={resetFlow} className="w-full">
