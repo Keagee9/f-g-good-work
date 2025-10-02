@@ -25,7 +25,6 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { availableTimes } from '@/lib/data';
 import { StyleSuggestor } from './style-suggestor';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -35,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { app } from '@/lib/firebase';
-import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 
 interface Booking {
   id: string;
@@ -60,7 +59,6 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     undefined
   );
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState('');
@@ -116,13 +114,10 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   };
 
   const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    setSelectedTime(null);
-  };
-
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
-    setStep('payment');
+    if (date) {
+      setSelectedDate(date);
+      setStep('payment');
+    }
   };
 
   const handleCopyToClipboard = (text: string) => {
@@ -139,7 +134,6 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
     setSelectedCategory(null);
     setSelectedAddons([]);
     setSelectedDate(undefined);
-    setSelectedTime(null);
     setReceiptFile(null);
     setReceiptPreview(null);
     setCustomerName('');
@@ -168,7 +162,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   };
   
   const handleConfirmation = async () => {
-    if (!selectedVariant || !selectedDate || !selectedTime || !receiptPreview || !customerName || !customerEmail || !customerPhone) {
+    if (!selectedVariant || !selectedDate || !receiptPreview || !customerName || !customerEmail || !customerPhone) {
         toast({
             variant: 'destructive',
             title: 'Missing Information',
@@ -194,7 +188,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             customerPhone,
             serviceName: selectedVariant.name,
             date: dateStr,
-            time: selectedTime,
+            time: "All Day",
             totalPrice: getTotalPrice(),
             addons: selectedAddons.map(a => a.name),
             receiptDataUri: receiptPreview,
@@ -225,7 +219,7 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 *Booking Details:*
 - *Service:* ${selectedVariant.name}
 - *Date:* ${dateStr}
-- *Time:* ${selectedTime}
+- *Time:* All Day
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
 Please check your email for the uploaded receipt to verify payment.
@@ -260,16 +254,14 @@ Please check your email for the uploaded receipt to verify payment.
     return receiptFile && customerName && customerEmail && customerPhone;
   }
   
-  const getBookedSlotsForDate = (date: Date) => {
+  const isDateBooked = (date: Date) => {
     const dateString = date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
     });
-    return bookings
-      .filter(b => b.date === dateString)
-      .map(b => b.time);
+    return bookings.some(b => b.date === dateString);
   };
 
 
@@ -459,10 +451,8 @@ Please check your email for the uploaded receipt to verify payment.
     );
   }
 
-  const renderDateTimeSelection = () => {
+  const renderDateSelection = () => {
     if (!selectedVariant || !selectedCategory) return null;
-
-    const bookedSlots = selectedDate ? getBookedSlotsForDate(selectedDate) : [];
 
     return (
       <div className="container py-8 px-4 md:px-6">
@@ -516,11 +506,16 @@ Please check your email for the uploaded receipt to verify payment.
               <CardHeader>
                 <CardTitle className="font-headline flex items-center text-primary text-xl md:text-2xl">
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
-                  Select a Date &amp; Time
+                  Select an Available Date
                 </CardTitle>
+                 <CardDescription>Only one booking is allowed per day. Please select a day for your appointment.</CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="w-full md:w-auto flex justify-center">
+              <CardContent className="flex justify-center">
+                {isLoadingBookings ? (
+                    <div className="flex-1 w-full flex items-center justify-center p-8">
+                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    </div>
+                ) : (
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -531,42 +526,10 @@ Please check your email for the uploaded receipt to verify payment.
                       if (date < yesterday || date.getDay() === 0) {
                         return true;
                       }
-                      const bookedSlotsForDay = getBookedSlotsForDate(date);
-                      return bookedSlotsForDay.length >= availableTimes.length;
+                      return isDateBooked(date);
                     }}
                     className="rounded-md border"
                   />
-                </div>
-                {isLoadingBookings ? (
-                    <div className="flex-1 w-full flex items-center justify-center">
-                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    </div>
-                ) : selectedDate && (
-                  <div className="flex-1 w-full">
-                    <h3 className="text-lg font-semibold mb-4 text-center md:text-left text-primary">
-                      Available Times for{' '}
-                      {selectedDate.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {availableTimes.map(time => {
-                        const isBooked = bookedSlots.includes(time);
-                        return (
-                            <Button
-                            key={time}
-                            variant="outline"
-                            onClick={() => handleTimeSelect(time)}
-                            disabled={isBooked}
-                            >
-                            {time}
-                            </Button>
-                        );
-                       })}
-                    </div>
-                  </div>
                 )}
               </CardContent>
             </Card>
@@ -727,7 +690,7 @@ Please check your email for the uploaded receipt to verify payment.
 
 
   const renderConfirmation = () => {
-    if (!selectedVariant || !selectedDate || !selectedTime) return null;
+    if (!selectedVariant || !selectedDate) return null;
     return (
       <div className="container py-12 flex justify-center items-center px-4 md:px-6">
         <Card className="w-full max-w-2xl text-center">
@@ -769,7 +732,7 @@ Please check your email for the uploaded receipt to verify payment.
     case 'payment':
       return renderPaymentInstructions();
     case 'date':
-      return renderDateTimeSelection();
+      return renderDateSelection();
     case 'addons':
       return renderAddonSelection();
     case 'service':
