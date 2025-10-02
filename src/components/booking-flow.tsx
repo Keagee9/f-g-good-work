@@ -231,7 +231,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
         return;
     }
 
-    const phoneNumber = '13234718770';
+    const phoneNumber = '2348102505732';
     const addonsText = selectedAddons.length > 0 
       ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}` 
       : '\nAdd-ons: None';
