@@ -19,7 +19,7 @@ function getDb(): admin.firestore.Firestore {
   
   // If the app is not initialized, create a new instance and return it.
   admin.initializeApp({
-    projectId: 'studio-2472646169-beca8',
+    credential: admin.credential.applicationDefault(),
   });
   return admin.app().firestore();
 }
