@@ -81,6 +81,13 @@ export function AdminDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    // This is a simple reload to force re-authentication.
+    // In a real app with proper auth, this would call a logout function.
+    window.location.reload();
+  };
+
+
   return (
     <div className="min-h-screen bg-background text-foreground">
        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -90,7 +97,7 @@ export function AdminDashboard() {
             <Button variant="outline" size="icon" onClick={fetchBookings} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+            <Button variant="outline" size="icon" onClick={handleLogout}>
                <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -138,23 +145,28 @@ export function AdminDashboard() {
                         <TableCell className="text-right space-x-2">
                            <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" disabled={!booking.receiptDataUri}>
                                 <FileImage className="w-4 h-4 mr-2" />
                                 View Receipt
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-md">
                               <DialogHeader>
                                 <DialogTitle>Payment Receipt for {booking.customerName}</DialogTitle>
                               </DialogHeader>
-                              <div className="mt-4 relative w-full aspect-[9/16] bg-muted rounded-md overflow-hidden">
-                                <Image
+                               {booking.receiptDataUri ? (
+                                <div className="mt-4 relative w-full h-auto" style={{ aspectRatio: '9 / 16' }}>
+                                  <Image
                                     src={booking.receiptDataUri}
                                     alt={`Receipt for ${booking.customerName}`}
                                     fill
                                     style={{ objectFit: 'contain' }}
-                                />
-                              </div>
+                                    unoptimized
+                                  />
+                                </div>
+                              ) : (
+                                <p className="text-muted-foreground text-center py-8">No receipt was uploaded.</p>
+                              )}
                             </DialogContent>
                           </Dialog>
                           {booking.status === 'pending' && (
@@ -167,7 +179,7 @@ export function AdminDashboard() {
                     ))}
                   </TableBody>
                 </Table>
-                 {bookings.length === 0 && (
+                 {bookings.length === 0 && !isLoading && (
                     <div className="text-center py-16">
                         <p className="text-muted-foreground">No bookings found.</p>
                     </div>
