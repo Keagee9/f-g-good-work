@@ -199,7 +199,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
             addons: selectedAddons.map(a => a.name),
             receiptDataUri: receiptPreview,
             createdAt: Timestamp.now(),
-            status: 'confirmed',
+            status: 'pending',
         };
         
         const saveBookingPromise = addDoc(collection(db, "bookings"), bookingData);
@@ -211,9 +211,11 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
           : '\nAdd-ons: None';
 
         const message = `
-*New Booking Notification!*
+*New PENDING Booking!*
 
-A client has booked an appointment and uploaded their payment receipt.
+A client has booked an appointment and uploaded their payment receipt. Please review and confirm.
+
+*Status:* PENDING
 
 *Client Details:*
 - *Name:* ${customerName}
@@ -226,7 +228,7 @@ A client has booked an appointment and uploaded their payment receipt.
 - *Time:* ${selectedTime}
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
-Please check your email for the uploaded receipt.
+Please check your email for the uploaded receipt to verify payment.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
