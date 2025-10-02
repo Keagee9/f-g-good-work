@@ -2,7 +2,7 @@
 'use client';
 
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,7 +36,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { sendNotification } from '@/ai/flows/send-notification-flow';
-import { getBookings, type Booking } from '@/ai/flows/get-bookings-flow';
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+
+interface Booking {
+  id: string;
+  customerName: string;
+  serviceName: string;
+  date: string;
+  time: string;
+}
 
 interface BookingFlowProps {
   serviceCategories: ServiceCategory[];
@@ -65,27 +74,32 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
 
   const { toast } = useToast();
 
+  const fetchBookings = useCallback(async () => {
+    setIsLoadingBookings(true);
+    try {
+      const db = getFirestore(app);
+      const bookingsCol = collection(db, 'bookings');
+      const bookingsSnapshot = await getDocs(bookingsCol);
+      const existingBookings = bookingsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Booking[];
+      setBookings(existingBookings);
+    } catch (error) {
+      console.error("Failed to fetch bookings", error);
+      toast({
+        variant: "destructive",
+        title: "Could not load schedule",
+        description: "Failed to fetch existing appointments. Please try refreshing.",
+      });
+    } finally {
+      setIsLoadingBookings(false);
+    }
+  }, [toast]);
+
+
   useEffect(() => {
     if (step === 'date') {
-      const fetchBookings = async () => {
-        setIsLoadingBookings(true);
-        try {
-          const existingBookings = await getBookings();
-          setBookings(existingBookings);
-        } catch (error) {
-          console.error("Failed to fetch bookings", error);
-          toast({
-            variant: "destructive",
-            title: "Could not load schedule",
-            description: "Failed to fetch existing appointments. Please try refreshing.",
-          });
-        } finally {
-          setIsLoadingBookings(false);
-        }
-      };
       fetchBookings();
     }
-  }, [step, toast]);
+  }, [step, fetchBookings]);
 
   const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
     setSelectedVariant(variant);
@@ -156,87 +170,64 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   };
   
   const handleConfirmation = async () => {
-    if (!selectedVariant || !selectedDate || !selectedTime || !receiptPreview) return;
+    if (!selectedVariant || !selectedDate || !selectedTime || !receiptPreview || !customerName || !customerEmail || !customerPhone) {
+        toast({
+            variant: 'destructive',
+            title: 'Missing Information',
+            description: 'Please fill out all fields and upload a receipt.',
+        });
+        return;
+    }
     setIsNotifying(true);
 
-    const date = selectedDate.toLocaleDateString('en-US', {
+    const dateStr = selectedDate.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
     });
 
-    let notificationResult: { success: boolean; message: string } | null = null;
-    
     try {
-        notificationResult = await sendNotification({
+        // Step 1: Save booking to Firestore from the client
+        const db = getFirestore(app);
+        const bookingData = {
             customerName,
             customerEmail,
             customerPhone,
             serviceName: selectedVariant.name,
-            date,
+            date: dateStr,
             time: selectedTime,
             totalPrice: getTotalPrice(),
             addons: selectedAddons.map(a => a.name),
             receiptDataUri: receiptPreview,
-        });
-
-        if (notificationResult.success) {
-            // Refetch bookings to update the UI
-            try {
-              const updatedBookings = await getBookings();
-              setBookings(updatedBookings);
-            } catch (error) {
-              console.error("Failed to refetch bookings after confirmation", error);
-              // This is not a critical error, so we just log it and continue
-            }
-
-            if (notificationResult.message.includes("email failed")) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Booking Saved, Email Failed',
-                    description: "Your booking is confirmed, but the email notification could not be sent. Please proceed with WhatsApp.",
-                    duration: 9000,
-                });
-            } else if (notificationResult.message.includes("not configured")) {
-                 toast({
-                    title: 'Booking Saved, Email Skipped',
-                    description: "Your booking is confirmed. Email notifications are not set up by the admin.",
-                });
-            }
-            else {
-                toast({
-                    title: 'Success!',
-                    description: 'Your booking has been saved and a confirmation email has been sent.',
-                });
-            }
-        } else {
-             toast({
-                variant: 'destructive',
-                title: 'Critical Booking Error',
-                description: notificationResult.message || "Could not save the booking. Please try again.",
-                duration: 9000,
-            });
-            setIsNotifying(false);
-            return;
-        }
-    } catch (error) {
-        console.error('Failed to call notification flow:', error);
+            createdAt: Timestamp.now(),
+            status: 'confirmed',
+        };
+        await addDoc(collection(db, "bookings"), bookingData);
         toast({
-            variant: 'destructive',
-            title: 'An Unexpected Error Occurred',
-            description: 'Could not communicate with the booking server. Please try again.',
+            title: 'Booking Saved!',
+            description: 'Your appointment has been successfully saved.',
         });
-        setIsNotifying(false);
-        return;
-    }
 
-    const phoneNumber = '2348102505732';
-    const addonsText = selectedAddons.length > 0 
-      ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}` 
-      : '\nAdd-ons: None';
+        // Step 2: Trigger server-side notification flow (for WhatsApp)
+        await sendNotification({
+            customerName,
+            customerEmail,
+            customerPhone,
+            serviceName: selectedVariant.name,
+            date: dateStr,
+            time: selectedTime,
+            totalPrice: getTotalPrice(),
+            addons: selectedAddons.map(a => a.name),
+        });
 
-    const message = `
+        // Step 3: Open WhatsApp link
+        const phoneNumber = '2348102505732';
+        const addonsText = selectedAddons.length > 0
+          ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}`
+          : '\nAdd-ons: None';
+
+        const message = `
 *New Booking Notification!*
 
 A client has booked an appointment and uploaded their payment receipt.
@@ -248,18 +239,28 @@ A client has booked an appointment and uploaded their payment receipt.
 
 *Booking Details:*
 - *Service:* ${selectedVariant.name}
-- *Date:* ${date}
+- *Date:* ${dateStr}
 - *Time:* ${selectedTime}
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
 Please check your email for the uploaded receipt.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-    
-    setStep('confirmation');
-    setIsNotifying(false);
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+        
+        setStep('confirmation');
+
+    } catch (error) {
+        console.error('An error occurred during confirmation:', error);
+        toast({
+            variant: 'destructive',
+            title: 'An Unexpected Error Occurred',
+            description: 'Could not complete the booking process. Please try again.',
+        });
+    } finally {
+        setIsNotifying(false);
+    }
   };
 
   const isUploadFormValid = () => {
