@@ -526,7 +526,11 @@ Please check your email for the uploaded receipt.
                     disabled={(date) => {
                       const yesterday = new Date();
                       yesterday.setDate(yesterday.getDate() - 1);
-                      return date < yesterday || date.getDay() === 0;
+                      if (date < yesterday || date.getDay() === 0) {
+                        return true;
+                      }
+                      const bookedSlotsForDay = getBookedSlotsForDate(date);
+                      return bookedSlotsForDay.length >= availableTimes.length;
                     }}
                     className="rounded-md border"
                   />
@@ -796,5 +800,3 @@ Please check your email for the uploaded receipt.
       return renderPolicy();
   }
 }
-
-    
