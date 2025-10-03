@@ -26,7 +26,6 @@ interface Booking {
   createdAt: Timestamp;
 }
 
-// Initialize Firestore instance directly
 const db = getFirestore(app);
 
 export function AdminDashboard() {
@@ -84,8 +83,6 @@ export function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    // This is a simple reload to force re-authentication.
-    // In a real app with proper auth, this would call a logout function.
     window.location.reload();
   };
 
@@ -161,7 +158,7 @@ export function AdminDashboard() {
                                 <DialogTitle>Payment Receipt for {booking.customerName}</DialogTitle>
                               </DialogHeader>
                                {booking.receiptDataUri ? (
-                                <div className="mt-4 relative w-full" style={{paddingBottom: '177%'}}>
+                                <div className="mt-4 relative w-full" style={{paddingBottom: '100%'}}>
                                   <Image
                                     src={booking.receiptDataUri}
                                     alt={`Receipt for ${booking.customerName}`}

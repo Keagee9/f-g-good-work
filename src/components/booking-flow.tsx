@@ -23,6 +23,7 @@ import {
   Mail,
   Loader2,
   Wand2,
+  PartyPopper,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { StyleSuggestor } from './style-suggestor';
@@ -222,7 +223,7 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 - *Time:* All Day
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
-Please check your email for the uploaded receipt to verify payment.
+Please check your admin dashboard to view the receipt and confirm the booking.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
@@ -657,7 +658,7 @@ Please check your email for the uploaded receipt to verify payment.
             {receiptPreview && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-primary mb-2">Receipt Preview:</p>
-                <div className="relative w-full aspect-video rounded-md overflow-hidden border">
+                <div className="relative w-full" style={{ paddingBottom: '100%' }}>
                   <Image
                     src={receiptPreview}
                     alt="Receipt preview"
@@ -695,23 +696,26 @@ Please check your email for the uploaded receipt to verify payment.
       <div className="container py-12 flex justify-center items-center px-4 md:px-6">
         <Card className="w-full max-w-2xl text-center">
           <CardHeader className="items-center">
-            <Mail className="w-16 h-16 text-foreground mb-4" />
+            <PartyPopper className="w-16 h-16 text-primary mb-4" />
             <CardTitle className="text-2xl md:text-3xl font-headline text-primary">
               Your Booking Request is Sent!
             </CardTitle>
             <CardDescription className="text-muted-foreground px-4">
-              Thank you for your booking. Your information has been sent.
+              Thank you for your booking. Please read the next steps below.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className="border rounded-lg p-6 space-y-3 bg-card">
-               <h3 className="font-bold text-xl text-primary">We will get back to you in 30min</h3>
-               <p className="text-muted-foreground">
-                 We've received your appointment request and payment details. Our team will review it and confirm your booking shortly.
-               </p>
+             <div className="border rounded-lg p-6 space-y-3 bg-card text-left">
+               <h3 className="font-bold text-lg text-primary">What Happens Next?</h3>
+               <ul className="space-y-2 list-decimal list-inside text-muted-foreground text-sm">
+                  <li>Your appointment status is currently <span className="font-bold text-primary">PENDING</span>.</li>
+                  <li>We have received your details and proof of payment. Our team will review it within the next 30 minutes.</li>
+                  <li>Once your payment is verified, we will send a final confirmation message to your phone number and email.</li>
+                  <li>If there are any issues, we will contact you directly.</li>
+               </ul>
              </div>
              <p className="text-sm text-muted-foreground pt-4">
-                You can now close this page.
+                You can now safely close this page.
             </p>
           </CardContent>
           <CardFooter>
