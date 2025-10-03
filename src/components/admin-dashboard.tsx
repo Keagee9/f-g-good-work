@@ -30,11 +30,18 @@ export function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [db, setDb] = useState<any>(null);
+
+  useEffect(() => {
+    // Initialize Firestore on the client side
+    setDb(getFirestore(app));
+  }, []);
+
 
   const fetchBookings = useCallback(async () => {
+    if (!db) return;
     setIsLoading(true);
     try {
-      const db = getFirestore(app);
       const bookingsCol = collection(db, 'bookings');
       const q = query(bookingsCol, orderBy('createdAt', 'desc'));
       const bookingsSnapshot = await getDocs(q);
@@ -42,6 +49,7 @@ export function AdminDashboard() {
         ...doc.data(),
         id: doc.id,
       })) as Booking[];
+      console.log("Fetched bookings:", bookingsList);
       setBookings(bookingsList);
     } catch (error) {
       console.error("Error fetching bookings: ", error);
@@ -53,15 +61,17 @@ export function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, db]);
 
   useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
+    if(db) {
+        fetchBookings();
+    }
+  }, [fetchBookings, db]);
 
   const handleConfirmBooking = async (bookingId: string) => {
+    if (!db) return;
     try {
-      const db = getFirestore(app);
       const bookingRef = doc(db, 'bookings', bookingId);
       await updateDoc(bookingRef, {
         status: 'confirmed'
@@ -123,6 +133,7 @@ export function AdminDashboard() {
                       <TableHead>Customer</TableHead>
                       <TableHead>Service</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead>Created At</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -137,6 +148,9 @@ export function AdminDashboard() {
                         </TableCell>
                         <TableCell>{booking.serviceName}</TableCell>
                         <TableCell>{booking.date}</TableCell>
+                        <TableCell>
+                            {booking.createdAt ? new Date(booking.createdAt.seconds * 1000).toLocaleString() : 'N/A'}
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
                             {booking.status}
@@ -155,7 +169,7 @@ export function AdminDashboard() {
                                 <DialogTitle>Payment Receipt for {booking.customerName}</DialogTitle>
                               </DialogHeader>
                                {booking.receiptDataUri ? (
-                                <div className="mt-4 relative w-full h-auto" style={{ aspectRatio: '9 / 16' }}>
+                                <div className="mt-4 relative w-full" style={{paddingBottom: '177%'}}>
                                   <Image
                                     src={booking.receiptDataUri}
                                     alt={`Receipt for ${booking.customerName}`}
