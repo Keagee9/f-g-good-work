@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { app } from '@/lib/firebase';
-import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy, Timestamp, Firestore } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -26,20 +26,30 @@ interface Booking {
   createdAt: Timestamp;
 }
 
+// Initialize Firestore instance directly
+let db: Firestore;
+try {
+  db = getFirestore(app);
+} catch (e) {
+  console.error("Failed to initialize Firestore", e);
+}
+
+
 export function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const [db, setDb] = useState<any>(null);
-
-  useEffect(() => {
-    // Initialize Firestore on the client side
-    setDb(getFirestore(app));
-  }, []);
-
 
   const fetchBookings = useCallback(async () => {
-    if (!db) return;
+    if (!db) {
+        toast({
+            variant: "destructive",
+            title: "Database connection failed",
+            description: "Could not connect to Firestore. Please check the console for errors.",
+        });
+        setIsLoading(false);
+        return;
+    }
     setIsLoading(true);
     try {
       const bookingsCol = collection(db, 'bookings');
@@ -61,13 +71,11 @@ export function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, db]);
+  }, [toast]);
 
   useEffect(() => {
-    if(db) {
-        fetchBookings();
-    }
-  }, [fetchBookings, db]);
+    fetchBookings();
+  }, [fetchBookings]);
 
   const handleConfirmBooking = async (bookingId: string) => {
     if (!db) return;
