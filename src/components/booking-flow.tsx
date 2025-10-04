@@ -200,7 +200,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
         const saveBookingPromise = addDoc(collection(db, "bookings"), bookingData);
 
         // Step 2: Open WhatsApp link immediately
-        const phoneNumber = '2348102505732';
+        const phoneNumber = '13234718770';
         const addonsText = selectedAddons.length > 0
           ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}`
           : '\nAdd-ons: None';
@@ -701,7 +701,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
               Your Booking Request is Sent!
             </CardTitle>
             <CardDescription className="text-muted-foreground px-4">
-              Thank you for your booking. Please read the next steps below.
+              Your request has been received. A final confirmation will be sent to you shortly after we verify your payment.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
