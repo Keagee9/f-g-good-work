@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { app } from '@/lib/firebase';
-import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, updateDoc, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,8 +27,6 @@ interface Booking {
   status: 'pending' | 'confirmed';
   createdAt: Timestamp;
 }
-
-const db = getFirestore(app);
 
 export function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);

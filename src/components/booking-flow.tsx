@@ -34,8 +34,8 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { app } from '@/lib/firebase';
-import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
@@ -74,24 +74,29 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
 
   const { toast } = useToast();
 
-  const fetchBookings = useCallback(async () => {
+  const fetchBookings = useCallback(() => {
     setIsLoadingBookings(true);
-    try {
-      const db = getFirestore(app);
-      const bookingsCol = collection(db, 'bookings');
-      const bookingsSnapshot = await getDocs(bookingsCol);
-      const existingBookings = bookingsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Booking[];
-      setBookings(existingBookings);
-    } catch (error) {
-      console.error("Failed to fetch bookings", error);
-      toast({
-        variant: "destructive",
-        title: "Could not load schedule",
-        description: "Failed to fetch existing appointments. Please try refreshing.",
+    const bookingsCol = collection(db, 'bookings');
+    getDocs(bookingsCol)
+      .then(bookingsSnapshot => {
+        const existingBookings = bookingsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Booking[];
+        setBookings(existingBookings);
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: bookingsCol.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+          variant: "destructive",
+          title: "Could not load schedule",
+          description: "Failed to fetch existing appointments. Please try refreshing.",
+        });
+      })
+      .finally(() => {
+        setIsLoadingBookings(false);
       });
-    } finally {
-      setIsLoadingBookings(false);
-    }
   }, [toast]);
 
 
@@ -183,7 +188,6 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
         day: 'numeric',
     });
     
-    const db = getFirestore(app);
     const bookingsColRef = collection(db, "bookings");
 
     const bookingData = {
