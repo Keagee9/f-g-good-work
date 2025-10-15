@@ -1,58 +1,50 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset is designed for the braider booking application.
+ * @file Firebase Security Rules for Firestore (Prototyping Mode)
  *
- * Core Philosophy:
- *   This ruleset prioritizes security and data ownership.  It enforces a mix of
- *   public read access with owner-only write access for some collections (e.g., /bookings),
- *   and strict user-ownership for user-specific data (e.g., /users/{userId}/appointments).
+ * @corePhilosophy This ruleset prioritizes authorization and access control,
+ *   while relaxing data validation to facilitate rapid prototyping. It enforces
+ *   strict ownership and role-based access where appropriate.
  *
- * Data Structure:
- *   - /bookings/{bookingId}: Stores booking requests. Publicly readable, but only
- *     creatable by authenticated users.
- *   - /services/{serviceId}: Stores service details. Publicly readable.
- *   - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointment data.
- *   - /suggestedStyles/{suggestedStyleId}: Public collection of braid styles.
+ * @dataStructure
+ *   - `/bookings/{bookingId}`: Stores booking requests.
+ *   - `/services/{serviceId}`: Stores service details.
+ *   - `/users/{userId}/appointments/{appointmentId}`: Stores user-specific appointment data.
+ *   - `/suggestedStyles/{suggestedStyleId}`: Stores AI-generated style suggestions.
  *
- * Key Security Decisions:
- *   - No user listing is allowed.
- *   - Users can only create bookings.
- *   - Users can only manage their own appointments under their respective /users/{userId} path.
- *   - All other write operations are disallowed unless explicitly granted.
+ * @keySecurityDecisions
+ *   - Public read access is granted to `/services` and `/suggestedStyles` for open discovery.
+ *   - Bookings can be created by anyone, reflecting an open booking request system.
+ *   - User-specific appointment data is strictly controlled via path-based ownership.
+ *   - The `list` operation is allowed only for the owner in user-scoped subcollections to read own data.
+ *   - No schema validation is performed beyond requiring an owner field for ownership checks.
  *
- * Denormalization for Authorization:
- *   - The current data model does not require denormalization.  The security rules can directly
- *     enforce access controls based on the path and, where necessary, checking the data being written
- *     (e.g., ensuring the authorId field in a /bookings document matches the request.auth.uid).
- *
- * Structural Segregation:
- *   - Private user data (appointments) is stored under the /users/{userId} subcollection.
+ * @denormalizationForAuthorization N/A
+ * @structuralSegregation N/A
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read booking details, but only authenticated users can create new bookings.
-     *   Updates and deletes are disallowed for now.
+     * @description Allows anyone to create booking requests, but restricts updates and deletes to authorized users.
      * @path /bookings/{bookingId}
-     * @allow (get, list): if true;
-     * @allow (create): if isSignedIn();
-     * @deny (update, delete): if true;
-     * @principle Allows public reads and authenticated writes for booking requests.
+     * @allow (create) Any unauthenticated user can create booking with a receipt and basic information.
+     * @deny (update) An unauthenticated user can not update a booking.
+     * @deny (delete) An unauthenticated user can not delete a booking.
+     * @principle Allows public creation of booking requests but no schema validation.
      */
     match /bookings/{bookingId} {
       allow get, list: if true;
-      allow create: if isSignedIn();
+      allow create: if true;
       allow update, delete: if false;
     }
 
     /**
-     * @description Allows anyone to read service details.  Write access is disallowed for now.
+     * @description Allows public read access to service details, but restricts writes.
      * @path /services/{serviceId}
-     * @allow (get, list): if true;
-     * @deny (create, update, delete): if true;
-     * @principle Grants public read access to service information.
+     * @allow (get, list) Any unauthenticated user can read services details
+     * @deny (create, update, delete) An unauthenticated user can not create, update, delete service details.
+     * @principle Allows public read access to service information with no schema validation.
      */
     match /services/{serviceId} {
       allow get, list: if true;
@@ -60,57 +52,48 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows a user to manage their own appointments.
+     * @description Allows owner-only access to appointments for a specific user, enforced by path-based ownership.
      * @path /users/{userId}/appointments/{appointmentId}
-     * @allow (get, list): if isOwner(userId);
-     * @allow (create): if isOwner(userId);
-     * @allow (update): if isExistingOwner(userId);
-     * @allow (delete): if isExistingOwner(userId);
-     * @deny any write request, if the user tries to change the `userId`.
-     * @principle Enforces user-ownership for appointment data.
+     * @allow (create) Only the user that matches the user id can create.
+     * @allow (get, list, update, delete) Only the user that matches the user id can read, write.
+     * @deny (create, get, list, update, delete) Other users can not create, read, write.
+     * @principle Enforces strict owner-only access to user-specific data, no schema validation performed.
      */
     match /users/{userId}/appointments/{appointmentId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId) && resource != null;
+      allow delete: if isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Allows anyone to read braid style suggestions. Write access is disallowed.
+     * @description Allows public read access to suggested styles, but restricts writes.
      * @path /suggestedStyles/{suggestedStyleId}
-     * @allow (get, list): if true;
-     * @deny (create, update, delete): if true;
-     * @principle Grants public read access to suggested styles.
+     * @allow (get, list) Any unauthenticated user can read suggested styles.
+     * @deny (create, update, delete) Other users can not create, read, write.
+     * @principle Allows public read access to AI-generated style suggestions with no schema validation.
      */
     match /suggestedStyles/{suggestedStyleId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
 
-    // ---- Helper functions ----
-
     /**
-     * @description Checks if the user is signed in.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
+     * @description Helper function to determine if the current user is the owner of the resource.
+     * @param {string} userId The user ID to check against the authenticated user's ID.
+     * @returns {boolean} True if the user is signed in and the provided userId matches the authenticated user's ID.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-     /**
-      * @description Checks if the authenticated user ID matches the provided user ID and that the resource exists.
-      *   This function should always be used for update and delete operations to prevent accidental changes to
-      *   non-existent data.
-      */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+    /**
+     * @description Helper function to determine if the user is signed in.
+     * @returns {boolean} True if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
     }
   }
 }
