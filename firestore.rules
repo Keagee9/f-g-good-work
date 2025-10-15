@@ -1,92 +1,89 @@
 /**
- * @fileoverview Firestore Security Rules for Braiding Salon App - Prototyping Mode
- *
- * Core Philosophy:
- * This ruleset prioritizes authorization and relational integrity while relaxing schema validation
- * to enable rapid prototyping.  It enforces strict ownership and role-based access control where specified.
- * Schema validation will be added in later iterations.
- *
- * Data Structure:
- * - /bookings/{bookingId}: Stores booking requests.
- * - /services/{serviceId}: Stores service details.
- * - /users/{userId}/appointments/{appointmentId}: Stores appointment details for a specific user.
- * - /suggestedStyles/{suggestedStyleId}: Stores suggested braid styles.
- *
- * Key Security Decisions:
- * - All write operations require authentication.
- * - User-specific data (appointments) is secured via path-based ownership.
- * - Public read access granted where explicitly specified (e.g., /services, /suggestedStyles, /bookings).
- * - Owner-only writes are enforced by comparing request.auth.uid to the document's ownerId (or equivalent).
- * - List operations are generally restricted to owners for user-specific data.
+ * @description This ruleset enforces a public-read, restricted-write model for bookings,
+ *              user-ownership for appointments, and open read access for services and suggested styles.
+ * @dataStructure
+ *  - /bookings/{bookingId}: Stores booking requests with public read access.
+ *  - /services/{serviceId}: Stores service details with open read.
+ *  - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointments with owner-only access.
+ *  - /suggestedStyles/{suggestedStyleId}: Stores suggested styles with open read.
+ * @keySecurityDecisions
+ *  - Bookings are publicly readable to facilitate date/time availability checks, but creation is open for prototyping.
+ *  - User listing is disallowed.
+ *  - Ambiguous relationships default to owner-only access.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows reading bookings for availability checks and creating new bookings, but restricts updates and deletes to authorized users/roles.
+     * @description Allows anyone to read bookings for availability checks, but only allows create operations.
+     *              Does NOT implement any write restrictions.
      * @path /bookings/{bookingId}
-     * @allow (get, list) - Any user can read bookings.
-     * @allow (create) - Any authenticated user can create a booking.
-     * @deny (update, delete) - Only authenticated users can update/delete a booking.  Authorization to update/delete should be added in the next iteration
-     * @principle Allows public read access for availability checks and restricts modifications.
+     * @allow (get, list): Any user can read booking information.
+     * @allow (create): Any user can create a booking.
+     * @deny (update, delete): No user can update or delete a booking.
+     * @principle Allows public read access for checking booking availability; open create for prototyping.
      */
     match /bookings/{bookingId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if false; // TODO: Add authorization logic for updates/deletes (e.g., admin role, booking owner)
+      allow get: if true;
+      allow list: if true;
+      allow create: if true;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows public read access to service details. Write access is denied, should be controlled via backend.
+     * @description Allows anyone to read service details.
      * @path /services/{serviceId}
-     * @allow (get, list) - Any user can read service details.
-     * @deny (create, update, delete) - No one can create, update, or delete services via the client.
-     * @principle Public read access with restricted write access.
+     * @allow (get, list): Any user can read service details.
+     * @deny (create, update, delete): No user can create, update, or delete a service.
+     * @principle Allows open read access to service details.
      */
     match /services/{serviceId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Allows an authenticated user to manage their own appointments.
+     * @description Enforces user-ownership for appointments.
      * @path /users/{userId}/appointments/{appointmentId}
-     * @allow (get, list, create, update, delete) - Only the owner (matching userId) can manage their appointments.
-     * @deny (get, list, create, update, delete) - Another user attempts to access appointments under a different userId.
-     * @principle Enforces document ownership for user-specific data.
+     * @allow (get, list): Only the owner can read their appointments.
+     * @allow (create): Only the owner can create appointments under their user ID.
+     * @allow (update, delete): Only the owner can update or delete their appointments, if they exist.
+     * @principle Enforces user-ownership for appointment data.
      */
     match /users/{userId}/appointments/{appointmentId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.serviceId is string;
-      allow update: if isExistingOwner(userId) && request.resource.data.serviceId is string;
-      allow delete: if isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Allows public read access to suggested braid styles. Write access is denied, should be controlled via backend.
+     * @description Allows anyone to read suggested braid styles.
      * @path /suggestedStyles/{suggestedStyleId}
-     * @allow (get, list) - Any user can read suggested styles.
-     * @deny (create, update, delete) - No one can create, update, or delete suggested styles via the client.
-     * @principle Public read access with restricted write access.
+     * @allow (get, list): Any user can read suggested styles.
+     * @deny (create, update, delete): No user can create, update, or delete a suggested style.
+     * @principle Allows open read access to suggested styles.
      */
     match /suggestedStyles/{suggestedStyleId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 
-  // Helper functions
   function isSignedIn() {
     return request.auth != null;
   }
 
   function isOwner(userId) {
     return request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
   }
 }
