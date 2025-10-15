@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFirebase } from '@/firebase';
-import { getAuth, createUserWithEmailAndPassword, listAll, User } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,43 +16,30 @@ import { useToast } from '@/hooks/use-toast';
 export default function SetupAdminPage() {
   const { auth, isUserLoading } = useFirebase();
   const { toast } = useToast();
+  const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSettingUp, setIsSettingUp] = useState(false);
-  const [setupComplete, setSetupComplete] = useState(false);
-  const [userCheckState, setUserCheckState] = useState<'loading' | 'no_users' | 'users_exist'>('loading');
+  const [adminExists, setAdminExists] = useState<boolean | null>(null);
 
+  // This check is a client-side approximation. In a real-world scenario,
+  // you would use a server-side mechanism (like a Cloud Function) to securely
+  // check if an admin account already exists before rendering this page.
   useEffect(() => {
-    // This check can only be done on the client side with the client SDK
-    // It's not perfectly secure, but sufficient for this prototype's one-time setup.
-    // In production, a server-side check or a more robust setup flow would be better.
-    const checkUsers = async () => {
-        try {
-            // A more scalable way to check for users would be a Cloud Function,
-            // as listAll() is not available in the client SDK.
-            // For this prototype, we assume if the current user isn't the admin,
-            // and we can't create one, it's because one already exists.
-            // This is a simplified approach. A better check is needed for a real app.
-            // We'll proceed with a "best-effort" client-side check.
-            if (auth.currentUser && auth.currentUser.email === 'admin@fgluxury.com') {
-                 setUserCheckState('users_exist');
-                 return;
-            }
-            // As we can't list users, we'll assume no users exist and let the creation logic handle conflicts.
-            setUserCheckState('no_users');
-
-        } catch (e) {
-            console.error("Error checking for existing users:", e);
-            setError("Could not verify user status. Please try again later.");
-            setUserCheckState('loading'); // Stay in loading on error
-        }
+    const checkAdminStatus = async () => {
+      // For this prototype, we'll try to create the user and if it fails with
+      // 'email-already-in-use', we know the admin exists. This is not ideal,
+      // but a reasonable client-side proxy without a backend function.
+      // We can't list users from the client.
+      // A dummy fetch to a protected resource could also work.
+      // For now, we'll just handle the error on creation.
+      setAdminExists(false); // Assume it doesn't exist until creation fails.
     };
-
     if (!isUserLoading) {
-        checkUsers();
+        checkAdminStatus();
     }
-  }, [isUserLoading, auth]);
+  }, [isUserLoading]);
 
   const handleSetup = async () => {
     if (password !== confirmPassword) {
@@ -70,13 +58,13 @@ export default function SetupAdminPage() {
       await createUserWithEmailAndPassword(auth, 'admin@fgluxury.com', password);
       toast({
         title: 'Admin Account Created!',
-        description: 'You can now log in with your new credentials.',
+        description: 'Redirecting you to the admin login page.',
       });
-      setSetupComplete(true);
+      router.push('/admin');
     } catch (e: any) {
       if (e.code === 'auth/email-already-in-use') {
-        setError('An admin account already exists. If you forgot the password, please reset it via the Firebase console.');
-        setUserCheckState('users_exist');
+        setError('An admin account already exists.');
+        setAdminExists(true);
       } else {
         setError(`An unexpected error occurred: ${e.message}`);
       }
@@ -85,7 +73,7 @@ export default function SetupAdminPage() {
     }
   };
 
-  if (userCheckState === 'loading' || isUserLoading) {
+  if (adminExists === null || isUserLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-background">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
@@ -93,24 +81,21 @@ export default function SetupAdminPage() {
     );
   }
 
-  if (userCheckState === 'users_exist' || setupComplete) {
+  if (adminExists) {
     return (
          <div className="flex justify-center items-center min-h-screen bg-background text-center px-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <div className="flex justify-center mb-4">
-                        {setupComplete ? <ShieldCheck className="w-12 h-12 text-green-500" /> : <ServerCrash className="w-12 h-12 text-destructive" />}
+                        <ServerCrash className="w-12 h-12 text-destructive" />
                     </div>
                     <CardTitle className="text-2xl font-headline text-primary">
-                        {setupComplete ? "Setup Complete" : "Setup Not Available"}
+                        Setup Not Available
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                      <p className="text-muted-foreground">
-                        {setupComplete
-                            ? "The admin account has been successfully created."
-                            : "An admin account already exists. This setup page can only be used once."
-                        }
+                        An admin account already exists for this application. This setup page can only be used once.
                     </p>
                     <Button variant="default" className="mt-6 w-full" asChild>
                         <Link href="/admin">Proceed to Admin Login</Link>
@@ -149,7 +134,7 @@ export default function SetupAdminPage() {
             <Input id="confirm-password" type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-center text-destructive bg-destructive/10 p-2 rounded-md">{error}</p>}
 
           <Button onClick={handleSetup} className="w-full" disabled={isSettingUp}>
             {isSettingUp ? <Loader2 className="animate-spin" /> : 'Create Admin Account'}
