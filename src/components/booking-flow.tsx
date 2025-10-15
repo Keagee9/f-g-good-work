@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
@@ -230,6 +231,7 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 Please check your admin dashboard to view the receipt and confirm the booking.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber.replace(/\D/g, '')}&text=${message}`;
     window.open(whatsappUrl, '_blank');
 
     addDoc(bookingsColRef, bookingData)
