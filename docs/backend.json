@@ -1,68 +1,101 @@
 {
   "entities": {
-    "Booking": {
+    "Service": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Booking",
+      "title": "Service",
       "type": "object",
-      "description": "Represents a single booking appointment made by a customer.",
+      "description": "Represents a service offered, cloned from AcuityScheduling.",
       "properties": {
-        "customerName": {
+        "id": {
           "type": "string",
-          "description": "The full name of the customer."
+          "description": "Unique identifier for the service."
         },
-        "customerEmail": {
+        "name": {
           "type": "string",
-          "description": "The email address of the customer.",
-          "format": "email"
+          "description": "Name of the service."
         },
-        "customerPhone": {
+        "description": {
           "type": "string",
-          "description": "The phone number of the customer."
+          "description": "Detailed description of the service."
         },
-        "serviceName": {
-          "type": "string",
-          "description": "The name of the service booked."
-        },
-        "date": {
-          "type": "string",
-          "description": "The date of the appointment."
-        },
-        "totalPrice": {
+        "price": {
           "type": "number",
-          "description": "The total price for the service and any add-ons."
+          "description": "Price of the service."
         },
-        "addons": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "A list of any selected add-ons."
-        },
-        "receiptDataUri": {
+        "imageUrl": {
           "type": "string",
-          "description": "A data URI of the uploaded payment receipt image."
-        },
-        "status": {
+          "description": "URL of the image representing the service.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price"
+      ]
+    },
+    "Appointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Appointment",
+      "type": "object",
+      "description": "Represents a scheduled appointment for a specific service.",
+      "properties": {
+        "id": {
           "type": "string",
-          "description": "The current status of the booking.",
-          "enum": ["pending", "confirmed"]
+          "description": "Unique identifier for the appointment."
         },
-        "createdAt": {
+        "serviceId": {
           "type": "string",
-          "description": "The timestamp of when the booking was created.",
+          "description": "Reference to the Service. (Relationship: Service 1:N Appointment)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The date and time the appointment starts.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The date and time the appointment ends.",
           "format": "date-time"
         }
       },
       "required": [
-        "customerName",
-        "customerEmail",
-        "customerPhone",
-        "serviceName",
-        "date",
-        "totalPrice",
-        "receiptDataUri",
-        "status",
-        "createdAt"
+        "id",
+        "serviceId",
+        "startTime",
+        "endTime"
+      ]
+    },
+    "SuggestedStyle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SuggestedStyle",
+      "type": "object",
+      "description": "Represents a braid style suggested by the GenAI tool.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the suggested style."
+        },
+        "styleName": {
+          "type": "string",
+          "description": "Name of the suggested braid style."
+        },
+        "styleDescription": {
+          "type": "string",
+          "description": "Description of the suggested style."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the image representing the suggested style.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "styleName",
+        "styleDescription",
+        "imageUrl"
       ]
     }
   },
@@ -75,21 +108,58 @@
   "firestore": {
     "structure": [
       {
-        "path": "/bookings/{bookingId}",
+        "path": "/services/{serviceId}",
         "definition": {
-          "entityName": "Booking",
+          "entityName": "Service",
           "schema": {
-            "$ref": "#/entities/Booking"
+            "$ref": "#/backend/entities/Service"
           },
-          "description": "Stores all booking appointments. This collection is accessed by both customers (for creation) and the admin (for management).",
+          "description": "Stores service details. Each document represents a unique service.",
           "params": [
             {
-              "name": "bookingId",
-              "description": "Unique identifier for the booking."
+              "name": "serviceId",
+              "description": "Unique identifier for the service."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Stores appointment details for a specific user. Each document represents a unique appointment. Path based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "appointmentId",
+              "description": "Unique identifier for the appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/suggestedStyles/{suggestedStyleId}",
+        "definition": {
+          "entityName": "SuggestedStyle",
+          "schema": {
+            "$ref": "#/backend/entities/SuggestedStyle"
+          },
+          "description": "Stores suggested braid styles from the GenAI tool.",
+          "params": [
+            {
+              "name": "suggestedStyleId",
+              "description": "Unique identifier for the suggested style."
             }
           ]
         }
       }
-    ]
+    ],
+    "reasoning": "The Firestore structure is designed to store service listings and appointments for the AcuClone application. It prioritizes Authorization Independence by storing all authorization data directly within the documents, avoiding the need for `get()` calls in security rules. This ensures atomic operations and easier debugging.\n\nServices are stored in a root-level collection called `services`. This segregation supports QAPs by allowing for simple rules that apply uniformly to all service documents.\n\nAppointments are stored as subcollections under each user (`/users/{userId}/appointments/{appointmentId}`). This path-based ownership provides a simple and secure way to manage appointments, ensuring that only the user can access their own appointment data. This structure directly addresses the core problem statement by providing a dedicated subcollection for a user's appointments, which can be efficiently queried and managed.\n\nSuggested styles are stored in a top-level collection called `suggestedStyles`. This segregation supports QAPs by allowing for simple rules that apply uniformly to all style documents."
   }
 }

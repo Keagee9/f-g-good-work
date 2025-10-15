@@ -1,74 +1,104 @@
+/**
+ * @fileoverview Firestore Security Rules for AcuClone.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for appointments, 
+ * and public read-only access for services and suggested styles.
+ *
+ * Data Structure:
+ * - /services/{serviceId}: Publicly readable service listings.
+ * - /users/{userId}/appointments/{appointmentId}: Appointments owned by a specific user.
+ * - /suggestedStyles/{suggestedStyleId}: Publicly readable suggested braid styles.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own appointments.
+ * - Services and suggested styles are publicly readable.
+ * - Data schema validation is relaxed to allow for rapid prototyping. Only ownership and relationship fields are validated.
+ * - All write operations require authentication.
+ *
+ * Denormalization for Authorization:
+ * - The 'appointments' subcollection under `/users/{userId}` uses path-based ownership for simple and performant rules.
+ *
+ * Structural Segregation:
+ * - Public data (services, suggested styles) is stored in top-level collections, while private user data (appointments) is stored in user-specific subcollections.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read the list of services. Only the service's id, name, description, price, and duration are stored here.
+     * @description Grants public read access to service listings. Only authenticated users can create, update, or delete services.
      * @path /services/{serviceId}
-     * @allow (get, list)
-     * @deny (create, update, delete)
-     * @principle Public read, owner-only writes (not implemented in this prototype).
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if isSignedIn();
+     * @allow delete: if isSignedIn();
+     * @deny create: if !isSignedIn();
+     * @deny update: if !isSignedIn();
+     * @deny delete: if !isSignedIn();
+     * @principle Allows public reads, restricts writes to signed in users.
      */
     match /services/{serviceId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Manages appointments for a specific user.
+     * @description Enforces user-ownership for appointments. Users can only access their own appointments.
      * @path /users/{userId}/appointments/{appointmentId}
-     * @allow (create) User creates an appointment for themselves.
-     * @allow (get, list) User reads their own appointment data.
-     * @allow (update, delete) User modifies or deletes their own appointment.
-     * @deny (create) User attempts to create an appointment for another user.
-     * @deny (get, list, update, delete) Another user attempts to access this user's appointments.
-     * @principle Enforces document ownership for writes and validates relational integrity.
+     * @allow get, list: if isOwner(userId);
+     * @allow create: if isOwner(userId);
+     * @allow update: if isExistingOwner(userId);
+     * @allow delete: if isExistingOwner(userId);
+     * @deny get: if !isOwner(userId);
+     * @deny list: if !isOwner(userId);
+     * @deny create: if !isOwner(userId);
+     * @deny update: if !isExistingOwner(userId);
+     * @deny delete: if !isExistingOwner(userId);
+     * @principle Enforces document ownership for all operations within a user's data tree.
      */
     match /users/{userId}/appointments/{appointmentId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return resource.data.clientId == request.auth.uid;
-      }
-
-      allow get, list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Manages payments for a specific user.
-     * @path /users/{userId}/payments/{paymentId}
-     * @allow (create) User creates a payment record for themselves.
-     * @allow (get, list) User reads their own payment data.
-     * @allow (update, delete) User modifies or deletes their own payment.
-     * @deny (create) User attempts to create a payment for another user.
-     * @deny (get, list, update, delete) Another user attempts to access this user's payments.
-     * @principle Enforces document ownership for writes.
+     * @description Grants public read access to suggested braid styles. Only authenticated users can create, update, or delete styles.
+     * @path /suggestedStyles/{suggestedStyleId}
+     * @allow get, list: if true;
+     * @allow create: if isSignedIn();
+     * @allow update: if isSignedIn();
+     * @allow delete: if isSignedIn();
+     * @deny create: if !isSignedIn();
+     * @deny update: if !isSignedIn();
+     * @deny delete: if !isSignedIn();
+     * @principle Allows public reads, restricts writes to signed in users.
      */
-    match /users/{userId}/payments/{paymentId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
+    match /suggestedStyles/{suggestedStyleId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
 
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      function isExistingOwner(userId) {
-        return resource.data.userId == request.auth.uid;
-      }
-      allow get, list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
 }
