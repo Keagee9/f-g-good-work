@@ -44,7 +44,7 @@ interface Booking {
   id: string;
   customerName: string;
   serviceName: string;
-  date: string;
+  date: string; // The formatted date string, e.g., "Wednesday, October 22, 2025"
   time: string;
 }
 
@@ -230,7 +230,6 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 Please check your admin dashboard to view the receipt and confirm the booking.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
 
     addDoc(bookingsColRef, bookingData)
@@ -259,14 +258,17 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
   
   const isDateBooked = (date: Date) => {
-    const dateString = date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-    return bookings.some(b => b.date === dateString);
-  };
+    // Get all booked dates as Date objects
+    const bookedDates = bookings.map(b => new Date(b.date));
+
+    // Find all booked days of the week for the month of the date being checked
+    const bookedDaysInMonth = bookedDates
+        .filter(bookedDate => bookedDate.getFullYear() === date.getFullYear() && bookedDate.getMonth() === date.getMonth())
+        .map(bookedDate => bookedDate.getDay());
+
+    // Check if the day of the week for the current date is in the list of booked days for that month
+    return bookedDaysInMonth.includes(date.getDay());
+};
 
 
   const renderPolicy = () => (
@@ -512,7 +514,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
                   Select an Available Date
                 </CardTitle>
-                 <CardDescription>Only one booking is allowed per day. Please select a day for your appointment.</CardDescription>
+                 <CardDescription>If a day of the week is booked (e.g. a Wednesday), all other Wednesdays in that month will be unavailable.</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
                 {isLoadingBookings ? (
@@ -527,9 +529,11 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     disabled={(date) => {
                       const yesterday = new Date();
                       yesterday.setDate(yesterday.getDate() - 1);
+                      // Disable past dates and Sundays
                       if (date < yesterday || date.getDay() === 0) {
                         return true;
                       }
+                      // Disable dates based on the new booking logic
                       return isDateBooked(date);
                     }}
                     className="rounded-md border"
