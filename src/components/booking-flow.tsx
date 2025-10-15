@@ -260,16 +260,19 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
   
   const isDateBooked = (date: Date) => {
-    // Get all booked dates as Date objects
-    const bookedDates = bookings.map(b => new Date(b.date));
+    // An array of date strings from the firestore booking document, e.g. "Wednesday, October 22, 2025"
+    const bookedDateStrings = bookings.map(b => b.date);
 
-    // Find all booked days of the week for the month of the date being checked
-    const bookedDaysInMonth = bookedDates
-        .filter(bookedDate => bookedDate.getFullYear() === date.getFullYear() && bookedDate.getMonth() === date.getMonth())
-        .map(bookedDate => bookedDate.getDay());
+    // The calendar date being checked by the function
+    const dateString = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
 
-    // Check if the day of the week for the current date is in the list of booked days for that month
-    return bookedDaysInMonth.includes(date.getDay());
+    // Check if the calendar date is in the array of booked date strings
+    return bookedDateStrings.includes(dateString);
 };
 
 
@@ -516,7 +519,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
                   Select an Available Date
                 </CardTitle>
-                 <CardDescription>If a day of the week is booked (e.g. a Wednesday), all other Wednesdays in that month will be unavailable.</CardDescription>
+                 <CardDescription>Dates that have already been booked are disabled.</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
                 {isLoadingBookings ? (
@@ -535,7 +538,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                       if (date < yesterday || date.getDay() === 0) {
                         return true;
                       }
-                      // Disable dates based on the new booking logic
+                      // Disable dates that are already booked
                       return isDateBooked(date);
                     }}
                     className="rounded-md border"
