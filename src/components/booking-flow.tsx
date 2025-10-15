@@ -36,6 +36,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { app } from '@/lib/firebase';
 import { getFirestore, collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+
 
 interface Booking {
   id: string;
@@ -179,33 +182,30 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
         month: 'long',
         day: 'numeric',
     });
+    
+    const db = getFirestore(app);
+    const bookingsColRef = collection(db, "bookings");
 
-    try {
-        // Step 1: Save booking to Firestore from the client
-        const db = getFirestore(app);
-        const bookingData = {
-            customerName,
-            customerEmail,
-            customerPhone,
-            serviceName: selectedVariant.name,
-            date: dateStr,
-            time: "All Day",
-            totalPrice: getTotalPrice(),
-            addons: selectedAddons.map(a => a.name),
-            receiptDataUri: receiptPreview,
-            createdAt: Timestamp.now(),
-            status: 'pending',
-        };
-        
-        const saveBookingPromise = addDoc(collection(db, "bookings"), bookingData);
+    const bookingData = {
+        customerName,
+        customerEmail,
+        customerPhone,
+        serviceName: selectedVariant.name,
+        date: dateStr,
+        time: "All Day",
+        totalPrice: getTotalPrice(),
+        addons: selectedAddons.map(a => a.name),
+        receiptDataUri: receiptPreview,
+        createdAt: Timestamp.now(),
+        status: 'pending',
+    };
 
-        // Step 2: Open WhatsApp link immediately
-        const phoneNumber = '13234718770';
-        const addonsText = selectedAddons.length > 0
-          ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}`
-          : '\nAdd-ons: None';
+    const phoneNumber = '+13234718770';
+    const addonsText = selectedAddons.length > 0
+      ? `\nAdd-ons:\n${selectedAddons.map(a => `- ${a.name}`).join('\n')}`
+      : '\nAdd-ons: None';
 
-        const message = `
+    const message = `
 *New PENDING Booking!*
 
 A client has booked an appointment and uploaded their payment receipt. Please review and confirm.
@@ -226,29 +226,28 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 Please check your admin dashboard to view the receipt and confirm the booking.
 `.trim().replace(/\n/g, '%0A').replace(/\*/g, '%2A');
 
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-        window.open(whatsappUrl, '_blank');
-        
-        // Step 3: Wait for booking to save, then show confirmation
-        await saveBookingPromise;
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
 
+    addDoc(bookingsColRef, bookingData)
+    .then(() => {
         toast({
             title: 'Booking Info Sent!',
             description: 'Your appointment request has been sent successfully.',
         });
-        
         setStep('confirmation');
-
-    } catch (error) {
-        console.error('An error occurred during confirmation:', error);
-        toast({
-            variant: 'destructive',
-            title: 'An Unexpected Error Occurred',
-            description: 'Could not complete the booking process. Please try again.',
+    })
+    .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: bookingsColRef.path,
+            operation: 'create',
+            requestResourceData: bookingData,
         });
-    } finally {
+        errorEmitter.emit('permission-error', permissionError);
+    })
+    .finally(() => {
         setIsConfirming(false);
-    }
+    });
   };
 
   const isUploadFormValid = () => {

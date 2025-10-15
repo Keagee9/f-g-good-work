@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Loader2, RefreshCw, LogOut, FileImage } from 'lucide-react';
 import Image from 'next/image';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 interface Booking {
   id: string;
@@ -35,51 +37,54 @@ export function AdminDashboard() {
 
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
-    try {
-      const bookingsCol = collection(db, 'bookings');
-      const q = query(bookingsCol, orderBy('createdAt', 'desc'));
-      const bookingsSnapshot = await getDocs(q);
-      const bookingsList = bookingsSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-      })) as Booking[];
-      console.log("Fetched bookings:", bookingsList);
-      setBookings(bookingsList);
-    } catch (error) {
-      console.error("Error fetching bookings: ", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to load bookings",
-        description: "There was an error fetching the bookings data. Please try again.",
+    const bookingsCol = collection(db, 'bookings');
+    const q = query(bookingsCol, orderBy('createdAt', 'desc'));
+    
+    getDocs(q)
+      .then(bookingsSnapshot => {
+        const bookingsList = bookingsSnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+        })) as Booking[];
+        console.log("Fetched bookings:", bookingsList);
+        setBookings(bookingsList);
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: bookingsCol.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
 
   const handleConfirmBooking = async (bookingId: string) => {
-    try {
-      const bookingRef = doc(db, 'bookings', bookingId);
-      await updateDoc(bookingRef, {
-        status: 'confirmed'
+    const bookingRef = doc(db, 'bookings', bookingId);
+    const updatedData = { status: 'confirmed' };
+    
+    updateDoc(bookingRef, updatedData)
+      .then(() => {
+        toast({
+          title: 'Booking Confirmed!',
+          description: 'The booking status has been updated to confirmed.',
+        });
+        fetchBookings(); // Refresh the list
+      })
+      .catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: bookingRef.path,
+          operation: 'update',
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-      toast({
-        title: 'Booking Confirmed!',
-        description: 'The booking status has been updated to confirmed.',
-      });
-      fetchBookings(); // Refresh the list
-    } catch (error) {
-      console.error("Error confirming booking: ", error);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: "Could not update the booking status.",
-      });
-    }
   };
 
   const handleLogout = () => {
