@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows anyone to read the list of services. Only the service's id, name, description, price, and duration are stored here.
+     * @path /services/{serviceId}
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Public read, owner-only writes (not implemented in this prototype).
+     */
+    match /services/{serviceId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Manages appointments for a specific user.
+     * @path /users/{userId}/appointments/{appointmentId}
+     * @allow (create) User creates an appointment for themselves.
+     * @allow (get, list) User reads their own appointment data.
+     * @allow (update, delete) User modifies or deletes their own appointment.
+     * @deny (create) User attempts to create an appointment for another user.
+     * @deny (get, list, update, delete) Another user attempts to access this user's appointments.
+     * @principle Enforces document ownership for writes and validates relational integrity.
+     */
+    match /users/{userId}/appointments/{appointmentId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return resource.data.clientId == request.auth.uid;
+      }
+
+      allow get, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages payments for a specific user.
+     * @path /users/{userId}/payments/{paymentId}
+     * @allow (create) User creates a payment record for themselves.
+     * @allow (get, list) User reads their own payment data.
+     * @allow (update, delete) User modifies or deletes their own payment.
+     * @deny (create) User attempts to create a payment for another user.
+     * @deny (get, list, update, delete) Another user attempts to access this user's payments.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/payments/{paymentId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return resource.data.userId == request.auth.uid;
+      }
+      allow get, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId) && isExistingOwner(userId);
+    }
+  }
+}
