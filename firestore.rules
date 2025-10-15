@@ -1,20 +1,108 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset defines access control for the Firestore database.
+ *
+ * Core Philosophy:
+ *  - The ruleset prioritizes security by enforcing strict ownership and explicit permissions.
+ *  - Data validation is relaxed in this prototyping phase to allow for rapid schema iteration, but critical authorization fields are validated.
+ *
+ * Data Structure:
+ *  - /bookings/{bookingId}: Stores booking requests, publicly readable for availability, writable for new bookings.
+ *  - /services/{serviceId}: Stores service definitions, publicly readable.
+ *  - /users/{userId}/appointments/{appointmentId}: Stores appointments for specific users, owner-only access.
+ *  - /suggestedStyles/{suggestedStyleId}: Stores suggested braid styles, publicly readable.
+ *
+ * Key Security Decisions:
+ *  - Public read access to the "bookings" and "services" collections to allow for checking availability and browsing services.
+ *  - Strict owner-only access to user-specific appointment data under /users/{userId}.
+ *  - No user listing is allowed (or possible).
+ *  - Write permissions on bookings are open, since there is no user associated with a booking request.
+ *  - Only authenticated users can create, update, or delete data.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is an admin.
-    // In a real app, this should check for a custom claim.
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
-    }
-    
-    // Bookings collection
-    // - Allow anyone to create (submit a booking request).
-    // - Allow only admins to read, update (confirm), or delete bookings.
+    /**
+     * @description Allows public read access to bookings and authenticated creation.
+     * @path /bookings/{bookingId}
+     * @allow (get, list): Any user can read booking information.
+     * @allow (create): Any authenticated user can create a booking.
+     * @deny (update, delete): Only admins can update or delete a booking (not implemented in this prototype).
+     * @principle Allows public reads, restricts writes to authenticated users.
+     */
     match /bookings/{bookingId} {
-      allow read, update, delete: if isAdmin();
-      allow create: if true;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    /**
+     * @description Allows public read access to services.
+     * @path /services/{serviceId}
+     * @allow (get, list): Any user can read service details.
+     * @deny (create, update, delete): No one can create, update, or delete a service (admin-only not implemented in this prototype).
+     * @principle Allows public reads, restricts writes to admins.
+     */
+    match /services/{serviceId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Enforces owner-only access to appointments for a specific user.
+     * @path /users/{userId}/appointments/{appointmentId}
+     * @allow (get, list): The owner (userId) can read their own appointments.
+     * @allow (create): The owner (userId) can create appointments under their ID.
+     * @allow (update, delete): The owner can update/delete their own existing appointments.
+     * @deny (create): A non-owner cannot create appointments for another user.
+     * @deny (update, delete): A non-owner cannot update/delete another user's appointments.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/appointments/{appointmentId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isExistingOwner(userId);
+    }
+
+     /**
+      * @description Allows public read access to suggested styles.
+      * @path /suggestedStyles/{suggestedStyleId}
+      * @allow (get, list): Any user can read suggested styles.
+      * @deny (create, update, delete): No one can create, update, or delete a suggested style (admin-only not implemented in this prototype).
+      * @principle Allows public reads, restricts writes to admins.
+      */
+    match /suggestedStyles/{suggestedStyleId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the user is signed in.
+     * @return True if the user is authenticated, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the resource based on the provided userId.
+     * @param userId The user ID to compare with the request's authentication UID.
+     * @return True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+   /**
+    * @description Checks if the user is the owner of an existing resource.
+    * @param userId The user ID to compare with the resource's owner ID.
+    * @return True if the user is the owner and the resource exists.
+    */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
   }
 }
