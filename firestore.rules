@@ -1,100 +1,75 @@
 /**
- * @fileoverview Firestore Security Rules for AcuClone.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for appointments, 
- * and public read-only access for services and suggested styles.
+ * @description This ruleset enforces a strict user-ownership model for appointments and allows public read access to services and suggested styles.
  *
  * Data Structure:
- * - /services/{serviceId}: Publicly readable service listings.
- * - /users/{userId}/appointments/{appointmentId}: Appointments owned by a specific user.
- * - /suggestedStyles/{suggestedStyleId}: Publicly readable suggested braid styles.
+ * - /services/{serviceId}: Stores service details, publicly readable.
+ * - /users/{userId}/appointments/{appointmentId}: Stores appointments, accessible only by the owning user.
+ * - /suggestedStyles/{suggestedStyleId}: Stores suggested styles, publicly readable.
  *
  * Key Security Decisions:
- * - Users can only access their own appointments.
- * - Services and suggested styles are publicly readable.
- * - Data schema validation is relaxed to allow for rapid prototyping. Only ownership and relationship fields are validated.
- * - All write operations require authentication.
- *
- * Denormalization for Authorization:
- * - The 'appointments' subcollection under `/users/{userId}` uses path-based ownership for simple and performant rules.
- *
- * Structural Segregation:
- * - Public data (services, suggested styles) is stored in top-level collections, while private user data (appointments) is stored in user-specific subcollections.
+ * - User listing is implicitly disallowed via the design, as there is no top-level collection of users.
+ * - Services and suggested styles are publicly readable but not writable by clients. This assumes an external process manages these collections.
+ * - Appointments are strictly owned by the user; only the user can create, read, update, or delete their own appointments.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants public read access to service listings. Only authenticated users can create, update, or delete services.
+     * @description Allows public read access to service details. Write access is denied.
      * @path /services/{serviceId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if isSignedIn();
-     * @allow delete: if isSignedIn();
-     * @deny create: if !isSignedIn();
-     * @deny update: if !isSignedIn();
-     * @deny delete: if !isSignedIn();
-     * @principle Allows public reads, restricts writes to signed in users.
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Allows anyone to read service details, but prevents unauthorized modifications.
      */
     match /services/{serviceId} {
       allow get: if true;
       allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
-     * @description Enforces user-ownership for appointments. Users can only access their own appointments.
+     * @description Enforces user-ownership for appointments. Only the user can create, read, update, or delete their own appointments.
      * @path /users/{userId}/appointments/{appointmentId}
-     * @allow get, list: if isOwner(userId);
-     * @allow create: if isOwner(userId);
-     * @allow update: if isExistingOwner(userId);
-     * @allow delete: if isExistingOwner(userId);
-     * @deny get: if !isOwner(userId);
-     * @deny list: if !isOwner(userId);
-     * @deny create: if !isOwner(userId);
-     * @deny update: if !isExistingOwner(userId);
-     * @deny delete: if !isExistingOwner(userId);
-     * @principle Enforces document ownership for all operations within a user's data tree.
+     * @allow (create) User A can create an appointment under /users/A/appointments/{appointmentId} if authenticated as User A.
+     * @allow (get, list, update, delete) User A can get, list, update, or delete their own appointments under /users/A/appointments/{appointmentId} if authenticated as User A.
+     * @deny (create) User B cannot create an appointment under /users/A/appointments/{appointmentId} if authenticated as User B.
+     * @deny (get, list, update, delete) User B cannot get, list, update, or delete appointments under /users/A/appointments/{appointmentId} if authenticated as User B.
+     * @principle Enforces document ownership for all operations. Validates path-based ownership.
      */
     match /users/{userId}/appointments/{appointmentId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == appointmentId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants public read access to suggested braid styles. Only authenticated users can create, update, or delete styles.
+     * @description Allows public read access to suggested braid styles. Write access is denied.
      * @path /suggestedStyles/{suggestedStyleId}
-     * @allow get, list: if true;
-     * @allow create: if isSignedIn();
-     * @allow update: if isSignedIn();
-     * @allow delete: if isSignedIn();
-     * @deny create: if !isSignedIn();
-     * @deny update: if !isSignedIn();
-     * @deny delete: if !isSignedIn();
-     * @principle Allows public reads, restricts writes to signed in users.
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Allows anyone to read suggested style details, but prevents unauthorized modifications.
      */
     match /suggestedStyles/{suggestedStyleId} {
       allow get: if true;
       allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // Helper functions
+    // --- Helper Functions ---
+
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function isExistingOwner(userId) {
