@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'AcuClone',
@@ -28,10 +29,12 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased min-h-screen bg-background')}>
-        <div className="max-w-screen-2xl mx-auto">
-          {children}
-        </div>
-        <Toaster />
+        <FirebaseClientProvider>
+          <div className="max-w-screen-2xl mx-auto">
+            {children}
+          </div>
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
