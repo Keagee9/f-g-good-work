@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -53,7 +54,7 @@ export function AdminDashboard() {
       },
       (serverError) => {
         const permissionError = new FirestorePermissionError({
-          path: bookingsQuery.toString(), // This might not be perfect but gives a hint
+          path: bookingsCol.path,
           operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
