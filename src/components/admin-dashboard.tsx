@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, updateDoc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, doc, updateDoc, query, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { Loader2, RefreshCw, LogOut, FileImage } from 'lucide-react';
 import Image from 'next/image';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useAuth } from '@/firebase';
 
 interface Booking {
   id: string;
@@ -32,36 +33,42 @@ export function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const auth = useAuth();
 
-  const fetchBookings = useCallback(async () => {
+
+  const bookingsCol = useMemo(() => collection(db, 'bookings'), []);
+  const bookingsQuery = useMemo(() => query(bookingsCol, orderBy('createdAt', 'desc')), [bookingsCol]);
+  
+  useEffect(() => {
     setIsLoading(true);
-    const bookingsCol = collection(db, 'bookings');
-    const q = query(bookingsCol, orderBy('createdAt', 'desc'));
-    
-    getDocs(q)
-      .then(bookingsSnapshot => {
-        const bookingsList = bookingsSnapshot.docs.map(doc => ({
+
+    const unsubscribe = onSnapshot(bookingsQuery, 
+      (snapshot) => {
+        const bookingsList = snapshot.docs.map(doc => ({
           ...doc.data(),
           id: doc.id,
         })) as Booking[];
-        console.log("Fetched bookings:", bookingsList);
         setBookings(bookingsList);
-      })
-      .catch(serverError => {
+        setIsLoading(false);
+      },
+      (serverError) => {
         const permissionError = new FirestorePermissionError({
-          path: bookingsCol.path,
+          path: bookingsQuery.toString(), // This might not be perfect but gives a hint
           operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
         setIsLoading(false);
-      });
-  }, []);
+         toast({
+          title: 'Error fetching bookings',
+          description: 'You do not have permission to view bookings. Contact your administrator.',
+          variant: 'destructive',
+        });
+      }
+    );
 
-  useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
+    return () => unsubscribe();
+  }, [bookingsQuery, toast]);
+
 
   const handleConfirmBooking = async (bookingId: string) => {
     const bookingRef = doc(db, 'bookings', bookingId);
@@ -73,7 +80,6 @@ export function AdminDashboard() {
           title: 'Booking Confirmed!',
           description: 'The booking status has been updated to confirmed.',
         });
-        fetchBookings(); // Refresh the list
       })
       .catch(serverError => {
         const permissionError = new FirestorePermissionError({
@@ -86,7 +92,7 @@ export function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    window.location.reload();
+    auth.signOut();
   };
 
 
@@ -96,7 +102,7 @@ export function AdminDashboard() {
         <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           <h1 className="text-xl md:text-2xl font-bold font-headline text-primary">Admin Dashboard</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={fetchBookings} disabled={isLoading}>
+            <Button variant="outline" size="icon" onClick={() => {}} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
             <Button variant="outline" size="icon" onClick={handleLogout}>
@@ -110,7 +116,7 @@ export function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>All Bookings</CardTitle>
-            <CardDescription>View and manage all appointment requests.</CardDescription>
+            <CardDescription>View and manage all appointment requests. New bookings will appear in real-time.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
