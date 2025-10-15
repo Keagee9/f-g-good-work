@@ -260,14 +260,8 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
   
   const isDateBooked = (date: Date) => {
-    const bookedDateStrings = bookings.map(b => b.date);
-    const dateString = date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-    return bookedDateStrings.includes(dateString);
+    const bookedDaysOfMonth = bookings.map(b => new Date(b.date).getDate());
+    return bookedDaysOfMonth.includes(date.getDate());
 };
 
 
@@ -514,7 +508,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                   <CalendarDays className="w-5 h-5 mr-3 text-foreground" />
                   Select an Available Date
                 </CardTitle>
-                 <CardDescription>Dates that have already been booked are disabled.</CardDescription>
+                 <CardDescription>Once a day of the month is booked (e.g. the 22nd), that day will be unavailable for all months.</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
                 {isLoadingBookings ? (
@@ -753,3 +747,5 @@ Please check your admin dashboard to view the receipt and confirm the booking.
       return renderPolicy();
   }
 }
+
+    
