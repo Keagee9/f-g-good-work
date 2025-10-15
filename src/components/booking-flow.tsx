@@ -260,18 +260,13 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
   
   const isDateBooked = (date: Date) => {
-    // An array of date strings from the firestore booking document, e.g. "Wednesday, October 22, 2025"
     const bookedDateStrings = bookings.map(b => b.date);
-
-    // The calendar date being checked by the function
     const dateString = date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
     });
-
-    // Check if the calendar date is in the array of booked date strings
     return bookedDateStrings.includes(dateString);
 };
 
