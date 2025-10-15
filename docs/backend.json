@@ -1,149 +1,68 @@
 {
   "entities": {
-    "Service": {
+    "Booking": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Service",
+      "title": "Booking",
       "type": "object",
-      "description": "Represents a service offered, cloned from AcuityScheduling.",
+      "description": "Represents a single booking appointment made by a customer.",
       "properties": {
-        "id": {
+        "customerName": {
           "type": "string",
-          "description": "Unique identifier for the service."
+          "description": "The full name of the customer."
         },
-        "name": {
+        "customerEmail": {
           "type": "string",
-          "description": "Name of the service."
-        },
-        "description": {
-          "type": "string",
-          "description": "Detailed description of the service."
-        },
-        "price": {
-          "type": "number",
-          "description": "Price of the service."
-        },
-        "duration": {
-          "type": "number",
-          "description": "Duration of the service in minutes."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "price",
-        "duration"
-      ]
-    },
-    "Appointment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Appointment",
-      "type": "object",
-      "description": "Represents a scheduled appointment.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the appointment."
-        },
-        "serviceId": {
-          "type": "string",
-          "description": "Reference to Service. (Relationship: Service 1:N Appointment)"
-        },
-        "startTime": {
-          "type": "string",
-          "description": "Start time of the appointment.",
-          "format": "date-time"
-        },
-        "endTime": {
-          "type": "string",
-          "description": "End time of the appointment.",
-          "format": "date-time"
-        },
-        "clientId": {
-          "type": "string",
-          "description": "Reference to Client. (Relationship: Client 1:N Appointment)"
-        },
-        "paymentId": {
-          "type": "string",
-          "description": "Reference to Payment. (Relationship: Payment 1:1 Appointment)"
-        }
-      },
-      "required": [
-        "id",
-        "serviceId",
-        "startTime",
-        "endTime",
-        "clientId"
-      ]
-    },
-    "Client": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Client",
-      "type": "object",
-      "description": "Represents a client booking an appointment.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the client."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "First name of the client."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "Last name of the client."
-        },
-        "email": {
-          "type": "string",
-          "description": "Email address of the client.",
+          "description": "The email address of the customer.",
           "format": "email"
         },
-        "phone": {
+        "customerPhone": {
           "type": "string",
-          "description": "Phone number of the client."
-        }
-      },
-      "required": [
-        "id",
-        "firstName",
-        "lastName",
-        "email"
-      ]
-    },
-    "Payment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Payment",
-      "type": "object",
-      "description": "Represents a payment made for an appointment.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the payment."
+          "description": "The phone number of the customer."
         },
-        "amount": {
+        "serviceName": {
+          "type": "string",
+          "description": "The name of the service booked."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the appointment."
+        },
+        "totalPrice": {
           "type": "number",
-          "description": "Amount paid."
+          "description": "The total price for the service and any add-ons."
         },
-        "paymentDate": {
+        "addons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of any selected add-ons."
+        },
+        "receiptDataUri": {
           "type": "string",
-          "description": "Date and time the payment was made.",
+          "description": "A data URI of the uploaded payment receipt image."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the booking.",
+          "enum": ["pending", "confirmed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp of when the booking was created.",
           "format": "date-time"
-        },
-        "paymentMethod": {
-          "type": "string",
-          "description": "Method of payment (e.g., credit card, cash)."
-        },
-        "transactionId": {
-          "type": "string",
-          "description": "Transaction identifier from the payment gateway."
         }
       },
       "required": [
-        "id",
-        "amount",
-        "paymentDate",
-        "paymentMethod"
+        "customerName",
+        "customerEmail",
+        "customerPhone",
+        "serviceName",
+        "date",
+        "totalPrice",
+        "receiptDataUri",
+        "status",
+        "createdAt"
       ]
     }
   },
@@ -156,62 +75,21 @@
   "firestore": {
     "structure": [
       {
-        "path": "/services/{serviceId}",
+        "path": "/bookings/{bookingId}",
         "definition": {
-          "entityName": "Service",
+          "entityName": "Booking",
           "schema": {
-            "$ref": "#/backend/entities/Service"
+            "$ref": "#/entities/Booking"
           },
-          "description": "Stores service details. No sensitive user data is stored here.",
+          "description": "Stores all booking appointments. This collection is accessed by both customers (for creation) and the admin (for management).",
           "params": [
             {
-              "name": "serviceId",
-              "description": "Unique identifier for the service."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/appointments/{appointmentId}",
-        "definition": {
-          "entityName": "Appointment",
-          "schema": {
-            "$ref": "#/backend/entities/Appointment"
-          },
-          "description": "Stores appointment data for each user. Includes denormalized data like startTime for optimized querying.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            },
-            {
-              "name": "appointmentId",
-              "description": "Unique identifier for the appointment."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/payments/{paymentId}",
-        "definition": {
-          "entityName": "Payment",
-          "schema": {
-            "$ref": "#/backend/entities/Payment"
-          },
-          "description": "Stores payment information for each user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            },
-            {
-              "name": "paymentId",
-              "description": "Unique identifier for the payment."
+              "name": "bookingId",
+              "description": "Unique identifier for the booking."
             }
           ]
         }
       }
-    ],
-    "reasoning": "This Firestore structure is designed to manage appointment bookings and payments for the AcuClone application. It prioritizes authorization independence and follows the DBAC (Database-Based Access Control) approach, using the user's `uid` for authentication. All data related to a user is namespaced under their `uid`, ensuring data privacy and security. The key principle applied here is denormalization to avoid `get()` calls in security rules, achieving Authorization Independence.\n\n*   **Services:** Stored in a root-level collection `services`. This is to keep service data easily accessible without needing a specific user context. List operations are allowed on the `services` collection, as the data here does not contain any sensitive information.\n*   **Appointments:** Appointments are stored in a subcollection `/users/{userId}/appointments/{appointmentId}`. This structure enforces path-based ownership, meaning that the appointment documents can only be created and modified by the user identified by `{userId}`. `startTime` is denormalized into the document to allow easier filtering of appointments for a user within a given time range.\n*   **Payments:** Payments are stored in a subcollection `/users/{userId}/payments/{paymentId}`. This structure ensures that only the user associated with the `userId` can access their payment information. It also adheres to path-based ownership. The appointment ID associated with each payment is denormalized, and vice versa in the appointments collection, so as to easily query appointments by payment or payments by appointment. \n\nThis structure ensures that list operations (`list`) are secure because they are always scoped to the user's `uid`. Rules are not used as filters, since we segregate user data using path-based ownership."
+    ]
   }
 }
