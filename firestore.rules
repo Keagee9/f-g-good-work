@@ -1,26 +1,35 @@
 /**
- * @description This ruleset enforces a strict user-ownership model for appointments and allows public read access to services and suggested styles.
+ * @file Firestore Security Rules for AcuClone.
  *
- * Data Structure:
- * - /services/{serviceId}: Stores service details, publicly readable.
- * - /users/{userId}/appointments/{appointmentId}: Stores appointments, accessible only by the owning user.
- * - /suggestedStyles/{suggestedStyleId}: Stores suggested styles, publicly readable.
+ * @corePhilosophy
+ * This ruleset enforces a combination of public read access for certain collections (e.g., services, suggestedStyles) and strict user-ownership for user-specific data (e.g., appointments).
  *
- * Key Security Decisions:
- * - User listing is implicitly disallowed via the design, as there is no top-level collection of users.
- * - Services and suggested styles are publicly readable but not writable by clients. This assumes an external process manages these collections.
- * - Appointments are strictly owned by the user; only the user can create, read, update, or delete their own appointments.
+ * @dataStructure
+ * - `/services/{serviceId}`: Stores publicly readable service data.
+ * - `/users/{userId}/appointments/{appointmentId}`: Stores user-specific appointment data, accessible only to the owning user.
+ * - `/suggestedStyles/{suggestedStyleId}`: Stores publicly readable suggested style data.
+ *
+ * @keySecurityDecisions
+ * - Services and SuggestedStyles are publicly readable but updates and deletes are forbidden. The application is in prototyping, so create is also forbidden.
+ * - User appointments are strictly owned and controlled by the user ID in the path.
+ * - The rules do not enforce the specific schema for `services` and `suggestedStyles` to allow for rapid iteration. The rules do enforce data consistency for appointments.
+ *
+ * @denormalizationForAuthorization
+ *  - N/A (Path-based ownership is used for appointments)
+ *
+ * @structuralSegregation
+ * - Public data (services, suggestedStyles) is stored in top-level collections. Private user data (appointments) is stored in user-specific subcollections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows public read access to service details. Write access is denied.
+     * @description Allows public read access to services, but restricts write access.
      * @path /services/{serviceId}
-     * @allow (get, list)
-     * @deny (create, update, delete)
-     * @principle Allows anyone to read service details, but prevents unauthorized modifications.
+     * @allow (get, list) Anyone can read service data.
+     * @deny (create, update, delete) No one can create, update, or delete service data through the rules.
+     * @principle Public read, restricted writes.
      */
     match /services/{serviceId} {
       allow get: if true;
@@ -31,28 +40,30 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for appointments. Only the user can create, read, update, or delete their own appointments.
+     * @description Manages appointments for a specific user. Only the owning user can create, read, update, and delete their own appointments.
      * @path /users/{userId}/appointments/{appointmentId}
-     * @allow (create) User A can create an appointment under /users/A/appointments/{appointmentId} if authenticated as User A.
-     * @allow (get, list, update, delete) User A can get, list, update, or delete their own appointments under /users/A/appointments/{appointmentId} if authenticated as User A.
-     * @deny (create) User B cannot create an appointment under /users/A/appointments/{appointmentId} if authenticated as User B.
-     * @deny (get, list, update, delete) User B cannot get, list, update, or delete appointments under /users/A/appointments/{appointmentId} if authenticated as User B.
-     * @principle Enforces document ownership for all operations. Validates path-based ownership.
+     * @allow (create) User 'user_abc' can create an appointment with ID 'appointment_123' under their user ID if request.auth.uid == 'user_abc'. The 'id' field in the appointment data must also equal 'appointment_123'.
+     * @allow (get, list) User 'user_abc' can read their own appointment data.
+     * @allow (update, delete) User 'user_abc' can update/delete their own existing appointment data.
+     * @deny (create) User 'user_xyz' cannot create an appointment under 'user_abc'.
+     * @deny (get, list) User 'user_xyz' cannot read appointments under 'user_abc'.
+     * @deny (update, delete) User 'user_xyz' cannot update/delete appointments under 'user_abc'.
+     * @principle Enforces document ownership for all operations. Validates relational integrity between path and document data on create and update.
      */
     match /users/{userId}/appointments/{appointmentId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == appointmentId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == appointmentId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.id == request.resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Allows public read access to suggested braid styles. Write access is denied.
+     * @description Allows public read access to suggested styles, but restricts write access.
      * @path /suggestedStyles/{suggestedStyleId}
-     * @allow (get, list)
-     * @deny (create, update, delete)
-     * @principle Allows anyone to read suggested style details, but prevents unauthorized modifications.
+     * @allow (get, list) Anyone can read suggested style data.
+     * @deny (create, update, delete) No one can create, update, or delete suggested style data.
+     * @principle Public read, restricted writes.
      */
     match /suggestedStyles/{suggestedStyleId} {
       allow get: if true;
@@ -62,18 +73,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // --- Helper Functions ---
-
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
     function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+        return isSignedIn() && isOwner(userId) && resource != null;
     }
   }
 }
