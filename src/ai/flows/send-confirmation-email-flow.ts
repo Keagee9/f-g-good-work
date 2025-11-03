@@ -34,17 +34,17 @@ export async function sendConfirmationEmail(input: EmailInput): Promise<EmailOut
 const emailPrompt = ai.definePrompt({
   name: 'generateConfirmationEmail',
   input: { schema: EmailInputSchema },
+  output: { schema: z.string().describe('A single HTML string for the email body.') },
   prompt: `
-    Generate a friendly and professional confirmation email for a hair salon appointment.
-    The email should be in HTML format.
+    Generate a friendly and professional confirmation email body for a hair salon appointment.
+    The email should be a single block of HTML content, without the <html> or <body> tags.
     
-    Here's the structure:
-    - Start with a greeting to the customer: "Hi {{customerName}},"
-    - Confirm their appointment with the service name and date: "Your appointment for {{serviceName}} on {{date}} is confirmed!"
-    - Include the salon's contact information: "Address: 13130 Doty Ave apt 9 Hawthorn ca 90250", "Phone: (323) 471-8770".
-    - Remind them of the policy: "Please remember to arrive with your hair washed and blow-dried. We look forward to seeing you!"
-    - End with a professional closing: "Best regards," followed by "The F&G Luxury Hair Team".
-    - Wrap the entire content in a visually appealing HTML structure with basic styling. Center the main content and include the company logo.
+    Here's the content to include:
+    - Start with a greeting to the customer: "<p>Hi {{customerName}},</p>"
+    - Confirm their appointment with the service name and date: "<p>Your appointment for <strong>{{serviceName}}</strong> on <strong>{{date}}</strong> is confirmed!</p>"
+    - Include the salon's contact information: "<p>Address: 13130 Doty Ave apt 9 Hawthorn ca 90250<br>Phone: (323) 471-8770</p>".
+    - Remind them of the policy: "<p>Please remember to arrive with your hair washed and blow-dried. We look forward to seeing you!</p>"
+    - End with a professional closing: "<p>Best regards,<br>The F&G Luxury Hair Team</p>".
   `,
 });
 
