@@ -6,10 +6,10 @@ import { AdminDashboard } from '@/components/admin-dashboard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ShieldCheck, Loader2, UserPlus, LogOut } from 'lucide-react';
+import { ShieldCheck, Loader2, UserPlus, LogOut, MailQuestion } from 'lucide-react';
 import Link from 'next/link';
 import { useFirebase, useUser } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
@@ -42,6 +42,30 @@ export default function AdminPage() {
     auth.signOut();
     setIsLoggingIn(false);
   }
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      toast({
+        variant: 'destructive',
+        title: 'Email required',
+        description: 'Please enter the admin email address to reset the password.',
+      });
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: `An email has been sent to ${email} with instructions to reset your password.`,
+      });
+    } catch (e: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Sending Email',
+        description: e.message || 'Could not send password reset email. Please try again.',
+      });
+    }
+  };
 
   if (isUserLoading) {
       return (
@@ -112,6 +136,12 @@ export default function AdminPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
               />
+            </div>
+             <div className="text-right">
+                <Button variant="link" size="sm" className="px-0" onClick={handlePasswordReset}>
+                  <MailQuestion className="mr-2" />
+                  Forgot Password?
+                </Button>
             </div>
             {error && (
                 <div className='text-center p-2 bg-destructive/10 border border-destructive/20 rounded-md'>
