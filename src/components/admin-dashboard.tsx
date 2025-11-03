@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useAuth } from '@/firebase';
+import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email-flow';
 
 interface Booking {
   id: string;
@@ -71,16 +72,32 @@ export function AdminDashboard() {
   }, [bookingsQuery, toast]);
 
 
-  const handleConfirmBooking = async (bookingId: string) => {
-    const bookingRef = doc(db, 'bookings', bookingId);
+  const handleConfirmBooking = async (booking: Booking) => {
+    const bookingRef = doc(db, 'bookings', booking.id);
     const updatedData = { status: 'confirmed' };
     
     updateDoc(bookingRef, updatedData)
       .then(() => {
         toast({
           title: 'Booking Confirmed!',
-          description: 'The booking status has been updated to confirmed.',
+          description: 'The booking status has been updated and a confirmation email has been sent.',
         });
+
+        // Send confirmation email
+        sendConfirmationEmail({
+          customerName: booking.customerName,
+          customerEmail: booking.customerEmail,
+          serviceName: booking.serviceName,
+          date: booking.date,
+        }).catch(emailError => {
+            console.error("Failed to send confirmation email:", emailError);
+             toast({
+                variant: 'destructive',
+                title: 'Email Failed to Send',
+                description: 'The booking was confirmed, but the confirmation email could not be sent.',
+            });
+        });
+
       })
       .catch(serverError => {
         const permissionError = new FirestorePermissionError({
@@ -183,7 +200,7 @@ export function AdminDashboard() {
                             </DialogContent>
                           </Dialog>
                           {booking.status === 'pending' && (
-                            <Button size="sm" onClick={() => handleConfirmBooking(booking.id)}>
+                            <Button size="sm" onClick={() => handleConfirmBooking(booking)}>
                               Confirm Booking
                             </Button>
                           )}

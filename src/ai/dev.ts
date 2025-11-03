@@ -4,5 +4,6 @@ config();
 
 import '@/ai/flows/style-suggestion-from-photo.ts';
 import '@/ai/flows/send-notification-flow.ts';
+import '@/ai/flows/send-confirmation-email-flow.ts';
 
     
