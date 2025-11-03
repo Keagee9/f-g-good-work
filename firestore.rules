@@ -7,7 +7,9 @@
  *  - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointments with owner-only access.
  *  - /suggestedStyles/{suggestedStyleId}: Stores suggested styles with open read.
  * @keySecurityDecisions
- *  - Bookings are publicly readable to facilitate date/time availability checks, but creation is open for prototyping.
+ *  - Bookings are publicly readable to facilitate date/time availability checks.
+ *  - Booking creation is public for all users.
+ *  - Booking updates (confirmations) are restricted to the admin user.
  *  - User listing is disallowed.
  *  - Ambiguous relationships default to owner-only access.
  */
@@ -16,19 +18,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read bookings for availability checks, but only allows create operations.
-     *              Does NOT implement any write restrictions.
+     * @description Allows anyone to read and create bookings, but only the admin can update them.
      * @path /bookings/{bookingId}
-     * @allow (get, list): Any user can read booking information.
-     * @allow (create): Any user can create a booking.
-     * @deny (update, delete): No user can update or delete a booking.
-     * @principle Allows public read access for checking booking availability; open create for prototyping.
+     * @allow (get, list, create): Any user can read or create a booking.
+     * @allow (update): Only the admin can update a booking (e.g., to confirm it).
+     * @deny (delete): No user can delete a booking.
+     * @principle Allows public creation/read for booking flow, but secures management actions.
      */
     match /bookings/{bookingId} {
       allow get: if true;
       allow list: if true;
       allow create: if true;
-      allow update: if false;
+      allow update: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
       allow delete: if false;
     }
 
