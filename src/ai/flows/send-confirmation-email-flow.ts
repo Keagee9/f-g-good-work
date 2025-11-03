@@ -34,17 +34,17 @@ export async function sendConfirmationEmail(input: EmailInput): Promise<EmailOut
 const emailPrompt = ai.definePrompt({
   name: 'generateConfirmationEmail',
   input: { schema: EmailInputSchema },
-  output: { schema: z.string().describe('A single HTML string for the email body.') },
   prompt: `
-    Generate a friendly and professional confirmation email body for a hair salon appointment.
-    The email should be a single block of HTML content, without the <html> or <body> tags.
+    Generate an HTML email body for a salon appointment confirmation.
     
-    Here's the content to include:
-    - Start with a greeting to the customer: "<p>Hi {{customerName}},</p>"
-    - Confirm their appointment with the service name and date: "<p>Your appointment for <strong>{{serviceName}}</strong> on <strong>{{date}}</strong> is confirmed!</p>"
-    - Include the salon's contact information: "<p>Address: 13130 Doty Ave apt 9 Hawthorn ca 90250<br>Phone: (323) 471-8770</p>".
-    - Remind them of the policy: "<p>Please remember to arrive with your hair washed and blow-dried. We look forward to seeing you!</p>"
-    - End with a professional closing: "<p>Best regards,<br>The F&G Luxury Hair Team</p>".
+    Include the following details:
+    - A greeting to the customer: Hi {{customerName}},
+    - Confirmation of their appointment: Your appointment for {{serviceName}} on {{date}} is confirmed!
+    - Salon contact information: Address: 13130 Doty Ave apt 9 Hawthorn ca 90250, Phone: (323) 471-8770.
+    - A policy reminder: Please remember to arrive with your hair washed and blow-dried.
+    - A closing: Best regards, The F&G Luxury Hair Team.
+
+    Wrap each part in a paragraph tag <p>. Do not include <html> or <body> tags.
   `,
 });
 
@@ -58,7 +58,7 @@ const sendConfirmationEmailFlow = ai.defineFlow(
   async (input) => {
     
     // Generate the email body using the AI prompt
-    const { output: htmlBody } = await emailPrompt(input);
+    const { text: htmlBody } = await ai.generate({prompt: emailPrompt.prompt, model: 'googleai/gemini-2.5-flash', input});
 
     if (!htmlBody) {
         throw new Error("Could not generate email body.");
