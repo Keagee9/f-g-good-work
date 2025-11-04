@@ -595,7 +595,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
               A 25% deposit is required to secure your booking. This will be applied to your total service cost.
             </p>
               <p className="text-sm text-muted-foreground text-center">
-              For users who are not on WhatsApp, you can share your proof of payment and booking info to this Gmail address: <strong className="text-primary">goodnessabengowe8@gmail.com</strong>
+              For users who are not on WhatsApp, you can share your proof of payment and booking info to this Gmail address: <strong className="text-primary">luxuryhairfg@gmail.com</strong>
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
@@ -747,5 +747,3 @@ Please check your admin dashboard to view the receipt and confirm the booking.
       return renderPolicy();
   }
 }
-
-    
