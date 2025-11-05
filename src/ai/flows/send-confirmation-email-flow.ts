@@ -35,16 +35,20 @@ const emailPrompt = ai.definePrompt({
   name: 'generateConfirmationEmail',
   input: { schema: EmailInputSchema },
   prompt: `
-    Generate an HTML email body for a salon appointment confirmation.
-    
-    Include the following details:
-    - A greeting to the customer: Hi {{customerName}},
-    - Confirmation of their appointment: Your appointment for {{serviceName}} on {{date}} is confirmed!
-    - Salon contact information: Address: 13130 Doty Ave apt 9 Hawthorn ca 90250, Phone: (323) 471-8770.
-    - A policy reminder: Please remember to arrive with your hair washed and blow-dried.
-    - A closing: Best regards, The F&G Luxury Hair Team.
+    Generate a plain text email body for a salon appointment confirmation.
+    The output should be plain text, not HTML.
+    Use the following template exactly, replacing the placeholders with the provided values.
 
-    Wrap each part in a paragraph tag <p>. Do not include <html> or <body> tags.
+    Hi {{customerName}},
+
+    Your appointment for {{serviceName}} on {{date}} is confirmed!
+
+    Address: 13130 Doty Ave apt 9 Hawthorn ca 90250, Phone: (323) 471-8770.
+
+    Please remember to arrive with your hair washed and blow-dried.
+
+    Best regards,
+    The F&G Luxury Hair Team.
   `,
 });
 
@@ -59,22 +63,25 @@ const sendConfirmationEmailFlow = ai.defineFlow(
     
     // Generate the email body using the AI prompt
     const response = await emailPrompt(input);
-    const htmlBody = response.text;
+    const emailText = response.text;
 
-    if (!htmlBody) {
+    if (!emailText) {
         throw new Error("Could not generate email body.");
     }
     
     // The logo URL
     const logoUrl = "https://v0-hair-salon-website-design-six.vercel.app/images/fg-luxury-hairs-logo.png";
     
-    // Full HTML with embedded logo
+    // Convert plain text newlines to <br> for HTML email
+    const htmlBody = emailText.replace(/\n/g, '<br>');
+
+    // Full HTML with embedded logo and styling
     const fullHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background-color: #0A0A0A; color: #D97706;">
         <div style="background-color: #000; padding: 20px; text-align: center;">
           <img src="${logoUrl}" alt="F&G Luxury Hair Logo" style="max-width: 150px;">
         </div>
-        <div style="padding: 20px; color: #333;">
+        <div style="padding: 20px; line-height: 1.6;">
           ${htmlBody}
         </div>
       </div>
