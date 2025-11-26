@@ -47,6 +47,7 @@ interface Booking {
   serviceName: string;
   date: string; // The formatted date string, e.g., "Wednesday, October 22, 2025"
   time: string;
+  status: 'pending' | 'confirmed';
 }
 
 interface BookingFlowProps {
@@ -260,9 +261,11 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
   
   const isDateBooked = (date: Date) => {
-    const bookedDaysOfMonth = bookings.map(b => new Date(b.date).getDate());
+    const bookedDaysOfMonth = bookings
+      .filter(b => b.status === 'confirmed')
+      .map(b => new Date(b.date).getDate());
     return bookedDaysOfMonth.includes(date.getDate());
-};
+  };
 
 
   const renderPolicy = () => (
