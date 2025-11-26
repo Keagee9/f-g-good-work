@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '@/lib/firebase';
 import { collection, doc, updateDoc, query, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,7 @@ import { Loader2, RefreshCw, LogOut, FileImage } from 'lucide-react';
 import Image from 'next/image';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
 import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email-flow';
 
 interface Booking {
@@ -36,12 +35,17 @@ export function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const auth = useAuth();
+  const db = useFirestore();
 
 
-  const bookingsCol = useMemo(() => collection(db, 'bookings'), []);
-  const bookingsQuery = useMemo(() => query(bookingsCol, orderBy('createdAt', 'desc')), [bookingsCol]);
+  const bookingsCol = useMemoFirebase(() => collection(db, 'bookings'), [db]);
+  const bookingsQuery = useMemoFirebase(() => query(bookingsCol, orderBy('createdAt', 'desc')), [bookingsCol]);
   
   useEffect(() => {
+    if (!bookingsQuery) {
+        setIsLoading(false);
+        return;
+    }
     setIsLoading(true);
 
     const unsubscribe = onSnapshot(bookingsQuery, 
@@ -69,7 +73,7 @@ export function AdminDashboard() {
     );
 
     return () => unsubscribe();
-  }, [bookingsQuery, toast]);
+  }, [bookingsQuery, toast, bookingsCol]);
 
 
   const handleConfirmBooking = async (booking: Booking) => {

@@ -35,10 +35,10 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useFirestore } from '@/firebase';
 
 
 interface Booking {
@@ -73,8 +73,8 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
-
   const { toast } = useToast();
+  const db = useFirestore();
 
   const fetchBookings = useCallback(() => {
     setIsLoadingBookings(true);
@@ -99,7 +99,7 @@ export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
       .finally(() => {
         setIsLoadingBookings(false);
       });
-  }, [toast]);
+  }, [db, toast]);
 
 
   useEffect(() => {
