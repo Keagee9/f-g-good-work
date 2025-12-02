@@ -24,7 +24,7 @@ import {
   Wand2,
   PartyPopper,
 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from './ui/checkbox';
 import { StyleSuggestor } from './style-suggestor';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -36,14 +36,13 @@ import { Label } from './ui/label';
 import { collection, addDoc, getDocs, Timestamp, query, orderBy } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
 interface Booking {
   id: string;
   customerName: string;
   serviceName: string;
   date: string;
-  time: string;
   status: 'pending' | 'confirmed';
 }
 
@@ -58,16 +57,16 @@ export function BookingFlow() {
   const [customerEmail, setCustomerEmail] = useState('luxuryhairfg@gmail.com');
   const [customerPhone, setCustomerPhone] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
-  const [bookings, setBookings] = useState<Booking[]>([]);
   const { toast } = useToast();
   const db = useFirestore();
 
-  const servicesRef = collection(db, 'services');
-  const addonsRef = collection(db, 'addons');
+  const servicesRef = useMemoFirebase(() => collection(db, 'services'), [db]);
+  const addonsRef = useMemoFirebase(() => collection(db, 'addons'), [db]);
+  const bookingsRef = useMemoFirebase(() => collection(db, 'bookings'), [db]);
 
   const { data: services, isLoading: servicesLoading } = useCollection<ServiceVariant>(servicesRef);
   const { data: addons, isLoading: addonsLoading } = useCollection<Addon>(addonsRef);
-  const { data: existingBookings, isLoading: bookingsLoading } = useCollection<Booking>(collection(db, 'bookings'));
+  const { data: existingBookings, isLoading: bookingsLoading } = useCollection<Booking>(bookingsRef);
 
   const serviceCategories = useMemo(() => {
     if (!services) return [];
