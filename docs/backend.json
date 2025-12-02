@@ -10,9 +10,24 @@
         "name": { "type": "string", "description": "Name of the service." },
         "description": { "type": "string", "description": "Detailed description of the service." },
         "price": { "type": "number", "description": "Price of the service." },
-        "imageUrl": { "type": "string", "description": "URL of the image representing the service.", "format": "uri" }
+        "imageUrl": { "type": "string", "description": "URL of the image representing the service.", "format": "uri" },
+        "category": { "type": "string", "description": "The category of the service (e.g., 'Bob Braids')." },
+        "duration": { "type": "string", "description": "The duration of the service." }
       },
-      "required": ["id", "name", "description", "price"]
+      "required": ["id", "name", "description", "price", "category", "duration"]
+    },
+    "Addon": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Addon",
+      "type": "object",
+      "description": "Represents an add-on service that can be booked.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the add-on." },
+        "name": { "type": "string", "description": "Name of the add-on." },
+        "price": { "type": "number", "description": "Price of the add-on." },
+        "duration": { "type": "string", "description": "The duration of the add-on." }
+      },
+      "required": ["id", "name", "price", "duration"]
     },
     "Appointment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -89,8 +104,17 @@
         "definition": {
           "entityName": "Service",
           "schema": { "$ref": "#/backend/entities/Service" },
-          "description": "Stores service details. Each document represents a unique service.",
+          "description": "Stores service details. Each document represents a unique service variant.",
           "params": [ { "name": "serviceId", "description": "Unique identifier for the service." } ]
+        }
+      },
+      {
+        "path": "/addons/{addonId}",
+        "definition": {
+          "entityName": "Addon",
+          "schema": { "$ref": "#/backend/entities/Addon" },
+          "description": "Stores add-on details. Each document represents a unique add-on.",
+          "params": [ { "name": "addonId", "description": "Unique identifier for the add-on." } ]
         }
       },
       {

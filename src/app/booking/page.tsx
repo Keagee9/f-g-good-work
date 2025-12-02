@@ -1,6 +1,4 @@
 import { BookingFlow } from '@/components/booking-flow';
-import { serviceCategories } from '@/lib/data';
-import { addons } from '@/lib/addons';
 import { Phone, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,7 +28,7 @@ export default function BookingPage() {
         </div>
       </header>
       <main className="flex-1">
-         <BookingFlow serviceCategories={serviceCategories} addons={addons} />
+         <BookingFlow />
       </main>
        <footer className="bg-card text-card-foreground py-8">
         <div className="container grid grid-cols-1 md:grid-cols-3 gap-8 text-sm px-4 md:px-6">
@@ -82,5 +80,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
-    

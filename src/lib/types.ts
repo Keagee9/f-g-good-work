@@ -4,6 +4,8 @@ export interface ServiceVariant {
   duration: string;
   price: number;
   description: string;
+  category: string;
+  image: string;
 }
 
 export interface ServiceCategory {

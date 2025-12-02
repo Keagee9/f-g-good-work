@@ -4,12 +4,14 @@
  * @dataStructure
  *  - /bookings/{bookingId}: Stores booking requests with public read access.
  *  - /services/{serviceId}: Stores service details with open read.
+ *  - /addons/{addonId}: Stores addon details with open read.
  *  - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointments with owner-only access.
  *  - /suggestedStyles/{suggestedStyleId}: Stores suggested styles with open read.
  * @keySecurityDecisions
  *  - Bookings are publicly readable to facilitate date/time availability checks.
  *  - Booking creation is public for all users.
  *  - Booking updates (confirmations) are restricted to the admin user.
+ *  - Service and Addon updates are restricted to the admin user.
  *  - User listing is disallowed.
  *  - Ambiguous relationships default to owner-only access.
  */
@@ -34,18 +36,33 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read service details.
+     * @description Allows anyone to read service details, but only admin can write.
      * @path /services/{serviceId}
      * @allow (get, list): Any user can read service details.
-     * @deny (create, update, delete): No user can create, update, or delete a service.
-     * @principle Allows open read access to service details.
+     * @allow (create, update, delete): Only admin can manage services.
+     * @principle Allows open read access to service details, admin-only for writes.
      */
     match /services/{serviceId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow update: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow delete: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+    }
+
+     /**
+     * @description Allows anyone to read add-on details, but only admin can write.
+     * @path /addons/{addonId}
+     * @allow (get, list): Any user can read addon details.
+     * @allow (create, update, delete): Only admin can manage addons.
+     * @principle Allows open read access to addon details, admin-only for writes.
+     */
+    match /addons/{addonId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow update: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow delete: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
     /**
