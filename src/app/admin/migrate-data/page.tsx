@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useFirestore } from '@/firebase';
-import { writeBatch, doc } from 'firebase/firestore';
+import { writeBatch, doc, getDocs, collection } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { serviceCategories as localServiceCategories } from '@/lib/data';
 import { addons as localAddons } from '@/lib/addons';
@@ -18,31 +18,40 @@ export default function MigrateDataPage() {
 
   const handleMigration = async () => {
     setIsMigrating(true);
-    const batch = writeBatch(db);
+    
+    try {
+      const batch = writeBatch(db);
 
-    // Migrate Services
-    localServiceCategories.forEach(category => {
-      category.variants.forEach(variant => {
-        const serviceRef = doc(db, 'services', variant.id);
-        batch.set(serviceRef, {
-          ...variant,
-          category: category.name,
-          image: category.image
+      // Clear existing services to prevent duplicates
+      const servicesSnapshot = await getDocs(collection(db, 'services'));
+      servicesSnapshot.forEach(doc => batch.delete(doc.ref));
+
+      // Clear existing addons
+      const addonsSnapshot = await getDocs(collection(db, 'addons'));
+      addonsSnapshot.forEach(doc => batch.delete(doc.ref));
+
+      // Migrate Services
+      localServiceCategories.forEach(category => {
+        category.variants.forEach(variant => {
+          const serviceRef = doc(db, 'services', variant.id);
+          batch.set(serviceRef, {
+            ...variant,
+            category: category.name,
+            image: category.image
+          });
         });
       });
-    });
 
-    // Migrate Addons
-    localAddons.forEach(addon => {
-      const addonRef = doc(db, 'addons', addon.id);
-      batch.set(addonRef, addon);
-    });
+      // Migrate Addons
+      localAddons.forEach(addon => {
+        const addonRef = doc(db, 'addons', addon.id);
+        batch.set(addonRef, addon);
+      });
 
-    try {
       await batch.commit();
       toast({
         title: 'Migration Successful!',
-        description: 'Services and add-ons have been moved to the database.',
+        description: 'All services and add-ons have been moved to the database.',
       });
       setMigrationDone(true);
     } catch (error: any) {
@@ -65,7 +74,7 @@ export default function MigrateDataPage() {
             Data Migration Utility
           </CardTitle>
           <CardDescription>
-            This is a one-time process to move your website's services and add-ons from code files into the Firestore database.
+            This is a one-time process to move your website's services and add-ons from code files into the Firestore database. If you have run this before, running it again will reset your data to the initial state from the code.
           </CardDescription>
         </CardHeader>
         <CardContent>
