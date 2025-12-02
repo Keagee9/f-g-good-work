@@ -72,15 +72,18 @@ export function BookingFlow() {
     if (!services) return [];
     const categoriesMap = new Map<string, ServiceCategory>();
     services.forEach(service => {
-      if (!categoriesMap.has(service.category)) {
-        categoriesMap.set(service.category, {
-          id: service.category.toLowerCase().replace(/ /g, '-'),
-          name: service.category,
-          image: service.image,
-          variants: [],
-        });
+      // Ensure service has a category property
+      if (service.category) {
+        if (!categoriesMap.has(service.category)) {
+          categoriesMap.set(service.category, {
+            id: service.category.toLowerCase().replace(/ /g, '-'),
+            name: service.category,
+            image: service.image, // The image is now on the service document itself
+            variants: [],
+          });
+        }
+        categoriesMap.get(service.category)!.variants.push(service);
       }
-      categoriesMap.get(service.category)!.variants.push(service);
     });
     return Array.from(categoriesMap.values());
   }, [services]);
@@ -240,12 +243,20 @@ Please check your admin dashboard to view the receipt and confirm the booking.
     return existingBookings
       .filter(booking => booking.status === 'confirmed')
       .some(booking => {
-        const bookedDate = new Date(booking.date);
-        return (
-          bookedDate.getFullYear() === date.getFullYear() &&
-          bookedDate.getMonth() === date.getMonth() &&
-          bookedDate.getDate() === date.getDate()
-        );
+        try {
+          // It's safer to parse the date string to avoid timezone issues.
+          const bookedDate = new Date(booking.date);
+          // Compare year, month, and day to ensure accurate matching.
+          return (
+            bookedDate.getFullYear() === date.getFullYear() &&
+            bookedDate.getMonth() === date.getMonth() &&
+            bookedDate.getDate() === date.getDate()
+          );
+        } catch (e) {
+          // If the date format is invalid, log it but don't crash.
+          console.error("Invalid date format in booking:", booking);
+          return false;
+        }
       });
   };
 

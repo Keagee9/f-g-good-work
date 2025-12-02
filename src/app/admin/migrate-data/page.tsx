@@ -34,10 +34,11 @@ export default function MigrateDataPage() {
       localServiceCategories.forEach(category => {
         category.variants.forEach(variant => {
           const serviceRef = doc(db, 'services', variant.id);
+          // Combine variant data with its parent category's name and image
           batch.set(serviceRef, {
             ...variant,
             category: category.name,
-            image: category.image
+            image: category.image, // Add the category image to each service document
           });
         });
       });
