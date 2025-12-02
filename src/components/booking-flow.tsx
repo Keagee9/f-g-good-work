@@ -1,7 +1,7 @@
 
 'use client';
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -26,6 +26,8 @@ import {
   PartyPopper,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
+import { serviceCategories } from '@/lib/data';
+import { addons } from '@/lib/addons';
 import { StyleSuggestor } from './style-suggestor';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -34,10 +36,10 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { collection, addDoc, getDocs, Timestamp, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, Timestamp, query, where } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
 interface Booking {
   id: string;
@@ -59,35 +61,36 @@ export function BookingFlow() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
   const { toast } = useToast();
-  const db = useFirestore();
+  const { firestore: db } = useFirebase();
 
-  const servicesRef = useMemoFirebase(() => collection(db, 'services'), [db]);
-  const addonsRef = useMemoFirebase(() => collection(db, 'addons'), [db]);
-  const bookingsRef = useMemoFirebase(() => collection(db, 'bookings'), [db]);
+  const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
 
-  const { data: services, isLoading: servicesLoading } = useCollection<ServiceVariant>(servicesRef);
-  const { data: addons, isLoading: addonsLoading } = useCollection<Addon>(addonsRef);
-  const { data: existingBookings, isLoading: bookingsLoading } = useCollection<Booking>(bookingsRef);
-
-  const serviceCategories = useMemo(() => {
-    if (!services) return [];
-    const categoriesMap = new Map<string, ServiceCategory>();
-    services.forEach(service => {
-      // Ensure service has a category property
-      if (service.category) {
-        if (!categoriesMap.has(service.category)) {
-          categoriesMap.set(service.category, {
-            id: service.category.toLowerCase().replace(/ /g, '-'),
-            name: service.category,
-            image: service.image, // The image is now on the service document itself
-            variants: [],
-          });
-        }
-        categoriesMap.get(service.category)!.variants.push(service);
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const bookingsCollection = collection(db, 'bookings');
+        // Only fetch bookings that are confirmed to block dates
+        const q = query(bookingsCollection, where("status", "==", "confirmed"));
+        const bookingsSnapshot = await getDocs(q);
+        const bookingsList = bookingsSnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+        })) as Booking[];
+        setExistingBookings(bookingsList);
+      } catch (e: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not fetch existing bookings.',
+          description: 'Please check your connection and try again.',
+        });
+        console.error("Error fetching bookings:", e);
+      } finally {
+        setIsLoadingBookings(false);
       }
-    });
-    return Array.from(categoriesMap.values());
-  }, [services]);
+    };
+    fetchBookings();
+  }, [db, toast]);
 
 
   const handleVariantSelect = (variant: ServiceVariant) => {
@@ -177,7 +180,6 @@ export function BookingFlow() {
         customerPhone,
         serviceName: selectedVariant.name,
         date: dateStr,
-        time: "All Day",
         totalPrice: getTotalPrice(),
         addons: selectedAddons.map(a => a.name),
         receiptDataUri: receiptPreview,
@@ -205,7 +207,6 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 *Booking Details:*
 - *Service:* ${selectedVariant.name}
 - *Date:* ${dateStr}
-- *Time:* All Day
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
 Please check your admin dashboard to view the receipt and confirm the booking.
@@ -240,25 +241,22 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
   
   const isDateBooked = (date: Date) => {
-    if (!existingBookings) return false;
-    return existingBookings
-      .filter(booking => booking.status === 'confirmed')
-      .some(booking => {
-        try {
-          // It's safer to parse the date string to avoid timezone issues.
-          const bookedDate = new Date(booking.date);
-          // Compare year, month, and day to ensure accurate matching.
-          return (
-            bookedDate.getFullYear() === date.getFullYear() &&
-            bookedDate.getMonth() === date.getMonth() &&
-            bookedDate.getDate() === date.getDate()
-          );
-        } catch (e) {
-          // If the date format is invalid, log it but don't crash.
-          console.error("Invalid date format in booking:", booking);
-          return false;
-        }
-      });
+    return existingBookings.some(booking => {
+      // Ensure we are only checking against confirmed bookings
+      if (booking.status !== 'confirmed') return false;
+      try {
+        const bookedDate = new Date(booking.date);
+        // Compare year, month, and day to avoid incorrect blocking
+        return (
+          bookedDate.getFullYear() === date.getFullYear() &&
+          bookedDate.getMonth() === date.getMonth() &&
+          bookedDate.getDate() === date.getDate()
+        );
+      } catch (e) {
+        console.error("Invalid date format in booking:", booking);
+        return false;
+      }
+    });
   };
 
   const renderPolicy = () => (
@@ -356,50 +354,44 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <StyleSuggestor />
         </div>
       </div>
-      {servicesLoading ? (
-         <div className="flex justify-center items-center h-64">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          </div>
-      ) : (
-        <Accordion type="single" collapsible className="w-full">
-            {serviceCategories.map(category => (
-            <AccordionItem value={category.id} key={category.id}>
-                <AccordionTrigger className="text-lg md:text-xl font-headline text-primary hover:no-underline">
-                    <div className="flex items-center gap-4 text-left">
-                        <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden flex-shrink-0">
-                            <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
-                        </div>
-                        {category.name}
+      <Accordion type="single" collapsible className="w-full">
+        {serviceCategories.map(category => (
+          <AccordionItem value={category.id} key={category.id}>
+            <AccordionTrigger className="text-lg md:text-xl font-headline text-primary hover:no-underline">
+                 <div className="flex items-center gap-4 text-left">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden flex-shrink-0">
+                        <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
                     </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                <div className="border-l-2 border-primary/20 pl-4 ml-6 md:ml-12">
-                    {category.variants.map((variant, index) => (
-                    <div key={variant.id}>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
-                        <div className="flex-1 pr-4">
-                            <h3 className="text-base md:text-lg font-semibold text-primary">{variant.name}</h3>
-                            <p className="text-sm text-muted-foreground mt-1">{variant.description}</p>
+                    {category.name}
+                 </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="border-l-2 border-primary/20 pl-4 ml-6 md:ml-12">
+                {category.variants.map((variant, index) => (
+                  <div key={variant.id}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
+                      <div className="flex-1 pr-4">
+                        <h3 className="text-base md:text-lg font-semibold text-primary">{variant.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{variant.description}</p>
+                      </div>
+                      <div className="flex items-center gap-4 w-full sm:w-auto">
+                        <div className="text-left sm:text-right flex-grow">
+                          <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">{variant.duration}</p>
                         </div>
-                        <div className="flex items-center gap-4 w-full sm:w-auto">
-                            <div className="text-left sm:text-right flex-grow">
-                            <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
-                            <p className="text-sm text-muted-foreground">{variant.duration}</p>
-                            </div>
-                            <Button onClick={() => handleVariantSelect(variant)} variant="outline">
-                            Select
-                            </Button>
-                        </div>
-                        </div>
-                        {index < category.variants.length - 1 && <Separator />}
+                        <Button onClick={() => handleVariantSelect(variant)} variant="outline">
+                          Select
+                        </Button>
+                      </div>
                     </div>
-                    ))}
-                </div>
-                </AccordionContent>
-            </AccordionItem>
-            ))}
-        </Accordion>
-      )}
+                    {index < category.variants.length - 1 && <Separator />}
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
   
@@ -420,11 +412,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {addonsLoading ? (
-                         <div className="flex justify-center items-center h-40">
-                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        </div>
-                    ) : (addons || []).map(addon => (
+                    {addons.map(addon => (
                         <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
                            <div className="flex items-center gap-4">
                                 <Checkbox 
@@ -459,6 +447,8 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   const renderDateSelection = () => {
     if (!selectedVariant) return null;
 
+    const category = serviceCategories.find(c => c.variants.some(v => v.id === selectedVariant.id));
+
     return (
       <div className="container py-8 px-4 md:px-6">
         <Button variant="ghost" onClick={() => setStep('addons')} className="mb-4">
@@ -469,13 +459,15 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <Card>
               <CardHeader className="p-0">
                 <div className="relative w-full h-48">
-                   <Image
-                    src={selectedVariant.image}
+                  {category && (
+                  <Image
+                    src={category.image}
                     alt={selectedVariant.name}
                     fill
                     style={{ objectFit: 'contain' }}
-                    data-ai-hint={`${selectedVariant.name}`}
+                    data-ai-hint={`${category.name}`}
                   />
+                  )}
                 </div>
                 <div className="p-6">
                   <Badge variant="secondary" className="mb-2">Selected Service</Badge>
@@ -516,7 +508,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                  <CardDescription>Only confirmed appointments will block a date. Dates with pending requests are still available.</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                {bookingsLoading ? (
+                {isLoadingBookings ? (
                     <div className="flex-1 w-full flex items-center justify-center p-8">
                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
@@ -750,3 +742,5 @@ Please check your admin dashboard to view the receipt and confirm the booking.
       return renderPolicy();
   }
 }
+
+    

@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import GMailer from 'gmail-send';
+const GMailer = require('gmail-send');
 
 // Define the input schema for the email flow
 const EmailInputSchema = z.object({
@@ -107,3 +107,5 @@ const sendConfirmationEmailFlow = ai.defineFlow(
     }
   }
 );
+
+    
