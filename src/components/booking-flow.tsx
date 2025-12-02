@@ -39,6 +39,9 @@ import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { serviceCategories } from '@/lib/data';
+import { addons } from '@/lib/addons';
+
 
 interface Booking {
   id: string;
@@ -49,17 +52,13 @@ interface Booking {
 }
 
 // Group services by category name
-const groupServicesByCategory = (services: ServiceVariant[]) => {
+const groupServicesByCategory = (services: { id: string, name: string, image: string, variants: ServiceVariant[] }[]) => {
   if (!services) return {};
-  return services.reduce((acc, service) => {
-    const categoryName = service.category || 'Uncategorized';
-    if (!acc[categoryName]) {
-      acc[categoryName] = {
-        image: service.image,
-        variants: [],
-      };
-    }
-    acc[categoryName].variants.push(service);
+  return services.reduce((acc, category) => {
+    acc[category.name] = {
+      image: category.image,
+      variants: category.variants,
+    };
     return acc;
   }, {} as Record<string, { image: string, variants: ServiceVariant[] }>);
 };
@@ -79,19 +78,12 @@ export function BookingFlow() {
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
 
-  // Fetch data from Firestore
-  const servicesRef = useMemoFirebase(() => query(collection(db, 'services'), orderBy('name')), [db]);
-  const { data: servicesFromDB, isLoading: isLoadingServices } = useCollection<ServiceVariant>(servicesRef);
-
-  const addonsRef = useMemoFirebase(() => query(collection(db, 'addons'), orderBy('name')), [db]);
-  const { data: addonsFromDB, isLoading: isLoadingAddons } = useCollection<Addon>(addonsRef);
-
   const existingBookingsRef = useMemoFirebase(() => query(collection(db, 'bookings'), where("status", "==", "confirmed")), [db]);
   const { data: existingBookings, isLoading: isLoadingBookings } = useCollection<Booking>(existingBookingsRef);
 
   const groupedServices = useMemo(() => {
-    return servicesFromDB ? groupServicesByCategory(servicesFromDB) : {};
-  }, [servicesFromDB]);
+    return groupServicesByCategory(serviceCategories);
+  }, []);
 
   const handleVariantSelect = (variant: ServiceVariant) => {
     setSelectedVariant(variant);
@@ -353,11 +345,6 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <StyleSuggestor />
         </div>
       </div>
-      {(isLoadingServices || !servicesFromDB) ? (
-        <div className="flex justify-center items-center h-64">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      ) : (
       <Accordion type="single" collapsible className="w-full">
         {Object.entries(groupedServices).map(([categoryName, { image, variants }]) => (
           <AccordionItem value={categoryName} key={categoryName}>
@@ -396,7 +383,6 @@ Please check your admin dashboard to view the receipt and confirm the booking.
           </AccordionItem>
         ))}
       </Accordion>
-      )}
     </div>
   );
   
@@ -417,30 +403,24 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {isLoadingAddons ? (
-                        <div className="flex justify-center items-center h-40">
-                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        </div>
-                    ) : (
-                        addonsFromDB?.map(addon => (
-                            <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
-                               <div className="flex items-center gap-4">
-                                    <Checkbox 
-                                      id={addon.id} 
-                                      onCheckedChange={() => handleAddonToggle(addon)}
-                                      checked={!!selectedAddons.find(a => a.id === addon.id)}
-                                    />
-                                    <label htmlFor={addon.id} className="flex flex-col">
-                                        <span className="font-semibold text-primary">{addon.name}</span>
-                                        <span className="text-sm text-muted-foreground">{addon.duration}</span>
-                                    </label>
-                                </div>
-                                <div className="text-base md:text-lg font-bold text-foreground text-right">
-                                    +${addon.price.toFixed(2)}
-                                </div>
+                    {addons.map(addon => (
+                        <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
+                           <div className="flex items-center gap-4">
+                                <Checkbox 
+                                  id={addon.id} 
+                                  onCheckedChange={() => handleAddonToggle(addon)}
+                                  checked={!!selectedAddons.find(a => a.id === addon.id)}
+                                />
+                                <label htmlFor={addon.id} className="flex flex-col">
+                                    <span className="font-semibold text-primary">{addon.name}</span>
+                                    <span className="text-sm text-muted-foreground">{addon.duration}</span>
+                                </label>
                             </div>
-                        ))
-                    )}
+                            <div className="text-base md:text-lg font-bold text-foreground text-right">
+                                +${addon.price.toFixed(2)}
+                            </div>
+                        </div>
+                    ))}
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div className="text-xl font-bold text-primary">
@@ -458,6 +438,8 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   const renderDateSelection = () => {
     if (!selectedVariant) return null;
 
+    const categoryImage = serviceCategories.find(cat => cat.variants.some(v => v.id === selectedVariant.id))?.image;
+
     return (
       <div className="container py-8 px-4 md:px-6">
         <Button variant="ghost" onClick={() => setStep('addons')} className="mb-4">
@@ -468,13 +450,15 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <Card>
               <CardHeader className="p-0">
                 <div className="relative w-full h-48">
-                  <Image
-                    src={selectedVariant.image}
-                    alt={selectedVariant.name}
-                    fill
-                    style={{ objectFit: 'contain' }}
-                    data-ai-hint={`${selectedVariant.category}`}
-                  />
+                  {categoryImage && (
+                      <Image
+                        src={categoryImage}
+                        alt={selectedVariant.name}
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        data-ai-hint={`${selectedVariant.name} style`}
+                      />
+                  )}
                 </div>
                 <div className="p-6">
                   <Badge variant="secondary" className="mb-2">Selected Service</Badge>
