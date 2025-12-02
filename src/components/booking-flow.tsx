@@ -1,3 +1,4 @@
+
 'use client';
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
 import { useState, useEffect, useCallback, useMemo } from 'react';
