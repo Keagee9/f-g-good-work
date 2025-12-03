@@ -1,81 +1,80 @@
-
 import type { ServiceCategory } from './types';
 
 export const serviceCategories: ServiceCategory[] = [
   {
-    "id": "cat_01",
-    "name": "Box Braids",
-    "image": "https://cdn-s.acuityscheduling.com/images/1.439.46933560/1688686121544-1688686121544.jpeg?1690509600000",
+    "id": "cat_001",
+    "name": "Bob Braids",
+    "image": "https://tse4.mm.bing.net/th?id=OIP.sJg3d5WpBtc_--8gD-53rwHaJP&pid=Api&P=0&h=220",
     "variants": [
       {
-        "id": "serv_01",
-        "name": "Small Box Braids",
-        "duration": "4 hours",
-        "price": 250,
-        "description": "Small, intricate box braids for a classic look."
-      },
-      {
-        "id": "serv_02",
-        "name": "Medium Box Braids",
+        "id": "var_001",
+        "name": "Small Bob Braids",
         "duration": "3 hours",
-        "price": 200,
-        "description": "Medium-sized box braids, a versatile and popular choice."
+        "price": 180,
+        "description": "Small, neat bob braids for a classic look."
       },
       {
-        "id": "serv_03",
-        "name": "Large Box Braids",
+        "id": "var_002",
+        "name": "Medium Bob Braids",
+        "duration": "2.5 hours",
+        "price": 160,
+        "description": "Medium-sized bob braids, a popular and stylish choice."
+      },
+      {
+        "id": "var_003",
+        "name": "Large Bob Braids",
         "duration": "2 hours",
-        "price": 150,
-        "description": "Large box braids for a bold, statement look."
+        "price": 140,
+        "description": "Large bob braids for a bold and beautiful statement."
       }
     ]
   },
   {
-    "id": "cat_02",
+    "id": "cat_002",
     "name": "Knotless Braids",
-    "image": "https://cdn-s.acuityscheduling.com/images/1.439.46933560/1688686186419-1688686186419.jpeg?1690509600000",
+    "image": "https://tse1.mm.bing.net/th?id=OIP.2s-2NCw5-23a5V7vB5D5XgHaJP&pid=Api&P=0&h=220",
     "variants": [
       {
-        "id": "serv_04",
+        "id": "var_004",
         "name": "Small Knotless Braids",
-        "duration": "5 hours",
-        "price": 300,
-        "description": "Small, seamless knotless braids for a natural finish."
-      },
-      {
-        "id": "serv_05",
-        "name": "Medium Knotless Braids",
         "duration": "4 hours",
         "price": 250,
-        "description": "Medium knotless braids, offering comfort and style."
+        "description": "Small, lightweight knotless braids for a natural look."
       },
       {
-        "id": "serv_06",
+        "id": "var_005",
+        "name": "Medium Knotless Braids",
+        "duration": "3.5 hours",
+        "price": 220,
+        "description": "Medium knotless braids, offering a balance of fullness and comfort."
+      },
+      {
+        "id": "var_006",
         "name": "Large Knotless Braids",
         "duration": "3 hours",
         "price": 200,
-        "description": "Large, comfortable knotless braids with a modern appeal."
+        "description": "Large knotless braids for a quick and stunning transformation."
       }
     ]
   },
   {
-    "id": "cat_03",
-    "name": "Cornrows",
-    "image": "https://tse4.mm.bing.net/th?id=OIP.iFmUDJp1h19f4a_SZuL-EwHaJQ&pid=Api&P=0&h=220",
+    "id": "cat_003",
+    "name": "Bohemian Braids",
+    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-48287514.jpeg",
     "variants": [
       {
-        "id": "serv_07",
-        "name": "Basic Cornrows",
-        "duration": "1 hour",
-        "price": 80,
-        "description": "Simple and clean straight-back cornrows."
+        "id": "var_007",
+        "name": "Small Bohemian Braids",
+        "duration": "4.5 hours",
+        "price": 280,
+        "description": "Small bohemian braids with curly strands for a free-spirited style."
       },
       {
-        "id": "serv_08",
-        "name": "Designer Cornrows",
-        "duration": "2 hours",
-        "price": 120,
-        "description": "Intricate and custom-designed cornrow styles."
+        "id": "var_008",
+        "name": "Medium Bohemian Braids",
+        "duration": "4 hours",
+        "price": 260,
+        "description": "Medium bohemian braids for a perfect blend of texture and volume."
       }
     ]
   }

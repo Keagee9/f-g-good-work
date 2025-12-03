@@ -1,29 +1,28 @@
-
 import type { Addon } from './types';
 
 export const addons: Addon[] = [
-    {
-      "id": "addon_01",
-      "name": "Takedown Service",
-      "price": 50,
-      "duration": "1 hour"
-    },
-    {
-      "id": "addon_02",
-      "name": "Beads",
-      "price": 20,
-      "duration": "15 minutes"
-    },
-    {
-      "id": "addon_03",
-      "name": "Extended Length",
-      "price": 30,
-      "duration": "0 minutes"
-    },
-    {
-      "id": "addon_04",
-      "name": "Deep Conditioning Treatment",
-      "price": 25,
-      "duration": "30 minutes"
-    }
+  {
+    "id": "addon_001",
+    "name": "Hair Trim",
+    "duration": "15 mins",
+    "price": 20
+  },
+  {
+    "id": "addon_002",
+    "name": "Deep Conditioning",
+    "duration": "30 mins",
+    "price": 35
+  },
+  {
+    "id": "addon_003",
+    "name": "Beads",
+    "duration": "15 mins",
+    "price": 15
+  },
+  {
+    "id": "addon_004",
+    "name": "Extended Length",
+    "duration": "0 mins",
+    "price": 30
+  }
 ];
