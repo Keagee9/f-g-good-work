@@ -30,5 +30,23 @@ export const addons: Addon[] = [
     "name": "Curly Hair for Boho (Per Bundle)",
     "duration": "+15 minutes",
     "price": 50
+  },
+  {
+    "id": "addon_006",
+    "name": "Shampoo & Deep Condition",
+    "duration": "+45 minutes",
+    "price": 60
+  },
+  {
+    "id": "addon_007",
+    "name": "Trim",
+    "duration": "+15 minutes",
+    "price": 25
+  },
+  {
+    "id": "addon_008",
+    "name": "Styling (Curls/Flat Iron)",
+    "duration": "+30 minutes",
+    "price": 45
   }
 ];
