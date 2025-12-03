@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
@@ -382,7 +381,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                 </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="border-l-2 border-primary/20 pl-4 ml-6 md:ml-12">
+              <div className="border-l-2 border-primary/20 pl-4 ml-4 sm:ml-6 md:ml-12">
                 {category.variants.map((variant, index) => (
                   <div key={variant.id}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
@@ -390,7 +389,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                         <h3 className="text-base md:text-lg font-semibold text-primary">{variant.name}</h3>
                         <p className="text-sm text-muted-foreground mt-1">{variant.description}</p>
                       </div>
-                      <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <div className="flex items-center gap-4 w-full sm:w-auto flex-shrink-0">
                         <div className="text-left sm:text-right flex-grow">
                           <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
                           <p className="text-sm text-muted-foreground">{variant.duration}</p>
@@ -441,7 +440,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                                     <span className="text-sm text-muted-foreground">{addon.duration}</span>
                                 </label>
                             </div>
-                            <div className="text-base md:text-lg font-bold text-foreground text-right">
+                            <div className="text-base md:text-lg font-bold text-foreground text-right shrink-0">
                                 +${addon.price.toFixed(2)}
                             </div>
                         </div>
@@ -668,7 +667,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             {receiptPreview && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-primary mb-2">Receipt Preview:</p>
-                <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+                <div className="relative w-full aspect-square max-h-96">
                   <Image
                     src={receiptPreview}
                     alt="Receipt preview"
