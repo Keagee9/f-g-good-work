@@ -2,79 +2,86 @@ import type { ServiceCategory } from './types';
 
 export const serviceCategories: ServiceCategory[] = [
   {
-    "id": "cat_001",
+    "id": "cat_braids",
     "name": "Bob Braids",
-    "image": "https://tse4.mm.bing.net/th?id=OIP.sJg3d5WpBtc_--8gD-53rwHaJP&pid=Api&P=0&h=220",
+    "image": "https://tse4.mm.bing.net/th?id=OIP.0sP23MLp4sQ44J_Yp3iLiQHaHa&pid=Api&P=0&h=220",
     "variants": [
       {
-        "id": "var_001",
+        "id": "ser_small_braids",
         "name": "Small Bob Braids",
         "duration": "3 hours",
-        "price": 180,
-        "description": "Small, neat bob braids for a classic look."
+        "price": 200,
+        "description": "Small, intricate bob braids for a detailed and lasting style."
       },
       {
-        "id": "var_002",
+        "id": "ser_medium_braids",
         "name": "Medium Bob Braids",
         "duration": "2.5 hours",
-        "price": 160,
-        "description": "Medium-sized bob braids, a popular and stylish choice."
+        "price": 180,
+        "description": "Classic medium-sized bob braids, a popular and versatile choice."
       },
       {
-        "id": "var_003",
+        "id": "ser_large_braids",
         "name": "Large Bob Braids",
         "duration": "2 hours",
-        "price": 140,
-        "description": "Large bob braids for a bold and beautiful statement."
+        "price": 160,
+        "description": "Bold and beautiful large bob braids for a standout look."
       }
     ]
   },
   {
-    "id": "cat_002",
+    "id": "cat_knotless",
     "name": "Knotless Braids",
-    "image": "https://tse1.mm.bing.net/th?id=OIP.2s-2NCw5-23a5V7vB5D5XgHaJP&pid=Api&P=0&h=220",
+    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-21013400.jpeg?1623343269",
     "variants": [
       {
-        "id": "var_004",
+        "id": "ser_knotless_small",
         "name": "Small Knotless Braids",
         "duration": "4 hours",
         "price": 250,
-        "description": "Small, lightweight knotless braids for a natural look."
+        "description": "Small and lightweight knotless braids for a natural look."
       },
       {
-        "id": "var_005",
+        "id": "ser_knotless_medium",
         "name": "Medium Knotless Braids",
         "duration": "3.5 hours",
         "price": 220,
-        "description": "Medium knotless braids, offering a balance of fullness and comfort."
+        "description": "The perfect balance with medium knotless braids."
       },
       {
-        "id": "var_006",
+        "id": "ser_knotless_large",
         "name": "Large Knotless Braids",
         "duration": "3 hours",
         "price": 200,
-        "description": "Large knotless braids for a quick and stunning transformation."
+        "description": "Quick and stylish large knotless braids."
       }
     ]
   },
   {
-    "id": "cat_003",
-    "name": "Bohemian Braids",
-    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-48287514.jpeg",
+    "id": "cat_twists",
+    "name": "Senegalese Twists",
+    "image": "https://tse1.mm.bing.net/th?id=OIP.i-b9YhB_E5b-w8W9T7G_iAHaHa&pid=Api&P=0&h=220",
     "variants": [
       {
-        "id": "var_007",
-        "name": "Small Bohemian Braids",
-        "duration": "4.5 hours",
-        "price": 280,
-        "description": "Small bohemian braids with curly strands for a free-spirited style."
+        "id": "ser_twists_small",
+        "name": "Small Twists",
+        "duration": "3.5 hours",
+        "price": 230,
+        "description": "Elegant and fine Senegalese twists."
       },
       {
-        "id": "var_008",
-        "name": "Medium Bohemian Braids",
-        "duration": "4 hours",
-        "price": 260,
-        "description": "Medium bohemian braids for a perfect blend of texture and volume."
+        "id": "ser_twists_medium",
+        "name": "Medium Twists",
+        "duration": "3 hours",
+        "price": 210,
+        "description": "Classic and beautiful medium Senegalese twists."
+      },
+      {
+        "id": "ser_twists_large",
+        "name": "Large Twists",
+        "duration": "2.5 hours",
+        "price": 190,
+        "description": "Bold and beautiful large Senegalese twists."
       }
     ]
   }
