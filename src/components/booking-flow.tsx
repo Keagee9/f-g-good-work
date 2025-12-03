@@ -1,4 +1,3 @@
-
 'use client';
 import type { ServiceVariant, Addon, ServiceCategory } from '@/lib/types';
 import { useState, useMemo } from 'react';
@@ -35,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { collection, addDoc, getDocs, Timestamp, query, where } from 'firebase/firestore';
-import { useFirebase, useUser } from '@/firebase';
+import { useFirebase, useUser, useMemoFirebase } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { serviceCategories } from '@/lib/data';
@@ -64,8 +63,8 @@ export function BookingFlow() {
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
 
-  const existingBookingsRef = useMemo(() => db ? query(collection(db, 'bookings'), where("status", "==", "confirmed")) : null, [db]);
-  const { data: existingBookings, isLoading: isLoadingBookings } = useCollection<Booking>(existingBookingsRef as any);
+  const existingBookingsRef = useMemoFirebase(() => db ? query(collection(db, 'bookings'), where("status", "==", "confirmed")) : null, [db]);
+  const { data: existingBookings, isLoading: isLoadingBookings } = useCollection<Booking>(existingBookingsRef);
 
   const groupedServices = useMemo(() => {
     return serviceCategories.reduce((acc, category) => {
