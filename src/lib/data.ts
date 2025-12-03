@@ -165,14 +165,6 @@ export const serviceCategories: ServiceCategory[] = [
       { id: 'passion-l', name: 'passion twists large', duration: '3 hours', price: 200.0, description: 'Hair is not included' },
     ],
   },
-  {
-    id: 'wig-install',
-    name: 'Wig Install',
-    image: 'https://tse1.mm.bing.net/th/id/OIP.XzbUF4enTs_pLcE7LTyYXAHaHa?cb=ucfimg2&pid=ImgDet&ucfimg=1&w=178&h=178&c=7&dpr=1.5&o=7&rm=3',
-    variants: [
-      { id: 'wig-install', name: 'wig install', duration: '2 hours', price: 100.0, description: '' },
-    ],
-  },
 ];
 
 export const availableTimes: string[] = [
