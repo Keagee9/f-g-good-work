@@ -2,86 +2,135 @@ import type { ServiceCategory } from './types';
 
 export const serviceCategories: ServiceCategory[] = [
   {
-    "id": "cat_braids",
-    "name": "Bob Braids",
-    "image": "https://tse4.mm.bing.net/th?id=OIP.0sP23MLp4sQ44J_Yp3iLiQHaHa&pid=Api&P=0&h=220",
+    "id": "cat_001",
+    "name": "Box Braids",
+    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-45093783.jpeg",
     "variants": [
       {
-        "id": "ser_small_braids",
-        "name": "Small Bob Braids",
+        "id": "var_001",
+        "name": "Small Box Braids",
+        "duration": "4 hours",
+        "price": 250,
+        "description": "Small, intricate box braids for a classic look."
+      },
+      {
+        "id": "var_002",
+        "name": "Medium Box Braids",
         "duration": "3 hours",
         "price": 200,
-        "description": "Small, intricate bob braids for a detailed and lasting style."
+        "description": "Medium-sized box braids, a popular and versatile choice."
       },
       {
-        "id": "ser_medium_braids",
-        "name": "Medium Bob Braids",
+        "id": "var_003",
+        "name": "Large Box Braids",
         "duration": "2.5 hours",
         "price": 180,
-        "description": "Classic medium-sized bob braids, a popular and versatile choice."
+        "description": "Large box braids for a bold and beautiful statement."
       },
       {
-        "id": "ser_large_braids",
-        "name": "Large Bob Braids",
+        "id": "var_004",
+        "name": "Jumbo Box Braids",
         "duration": "2 hours",
-        "price": 160,
-        "description": "Bold and beautiful large bob braids for a standout look."
+        "price": 150,
+        "description": "Extra large, jumbo-sized box braids for a quick and stylish look."
       }
     ]
   },
   {
-    "id": "cat_knotless",
+    "id": "cat_002",
     "name": "Knotless Braids",
-    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-21013400.jpeg?1623343269",
+    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-45093864.jpeg",
     "variants": [
       {
-        "id": "ser_knotless_small",
+        "id": "var_005",
         "name": "Small Knotless Braids",
-        "duration": "4 hours",
-        "price": 250,
-        "description": "Small and lightweight knotless braids for a natural look."
+        "duration": "4.5 hours",
+        "price": 300,
+        "description": "Small, lightweight knotless braids that are gentle on your scalp."
       },
       {
-        "id": "ser_knotless_medium",
+        "id": "var_006",
         "name": "Medium Knotless Braids",
         "duration": "3.5 hours",
-        "price": 220,
-        "description": "The perfect balance with medium knotless braids."
+        "price": 250,
+        "description": "Medium-sized knotless braids for a natural and seamless look."
       },
       {
-        "id": "ser_knotless_large",
+        "id": "var_007",
         "name": "Large Knotless Braids",
         "duration": "3 hours",
         "price": 200,
-        "description": "Quick and stylish large knotless braids."
+        "description": "Large, beautiful knotless braids that offer style and comfort."
+      },
+      {
+        "id": "var_008",
+        "name": "Jumbo Knotless Braids",
+        "duration": "2.5 hours",
+        "price": 180,
+        "description": "Jumbo knotless braids for a quick, pain-free, and stunning hairstyle."
       }
     ]
   },
   {
-    "id": "cat_twists",
-    "name": "Senegalese Twists",
-    "image": "https://tse1.mm.bing.net/th?id=OIP.i-b9YhB_E5b-w8W9T7G_iAHaHa&pid=Api&P=0&h=220",
+    "id": "cat_003",
+    "name": "Boho/Goddess Braids",
+    "image": "https://tse4.mm.bing.net/th?id=OIP.3i3bYpB0bY6I-D4bXz_iQAHaHa&pid=Api&P=0&h=220",
     "variants": [
       {
-        "id": "ser_twists_small",
-        "name": "Small Twists",
+        "id": "var_009",
+        "name": "Small Boho Braids",
+        "duration": "4.5 hours",
+        "price": 350,
+        "description": "Small, bohemian-style braids with curly ends for a free-spirited look."
+      },
+      {
+        "id": "var_010",
+        "name": "Medium Boho Braids",
         "duration": "3.5 hours",
-        "price": 230,
-        "description": "Elegant and fine Senegalese twists."
+        "price": 300,
+        "description": "Medium-sized boho braids that blend a chic and carefree vibe."
       },
       {
-        "id": "ser_twists_medium",
-        "name": "Medium Twists",
+        "id": "var_011",
+        "name": "Large Boho Braids",
         "duration": "3 hours",
-        "price": 210,
-        "description": "Classic and beautiful medium Senegalese twists."
+        "price": 250,
+        "description": "Large boho braids for a voluminous, textured, and stylish appearance."
+      }
+    ]
+  },
+  {
+    "id": "cat_004",
+    "name": "Cornrows",
+    "image": "https://tse1.mm.bing.net/th?id=OIP.f-4X-V3TIEp-rq0k-f1pCwHaHa&pid=Api&rs=1&c=1&qlt=95&w=121&h=121",
+    "variants": [
+      {
+        "id": "var_012",
+        "name": "Small Feed-in Cornrows",
+        "duration": "3 hours",
+        "price": 180,
+        "description": "Small, neat feed-in cornrows for a sleek and intricate style."
       },
       {
-        "id": "ser_twists_large",
-        "name": "Large Twists",
-        "duration": "2.5 hours",
-        "price": 190,
-        "description": "Bold and beautiful large Senegalese twists."
+        "id": "var_013",
+        "name": "Medium Feed-in Cornrows",
+        "duration": "2 hours",
+        "price": 150,
+        "description": "Medium-sized feed-in cornrows that are both stylish and practical."
+      },
+      {
+        "id": "var_014",
+        "name": "Large Feed-in Cornrows",
+        "duration": "1.5 hours",
+        "price": 120,
+        "description": "Large feed-in cornrows for a quick and bold look."
+      },
+      {
+        "id": "var_015",
+        "name": "Lemonade Braids",
+        "duration": "3 hours",
+        "price": 200,
+        "description": "Stylish side-swept cornrows inspired by Beyoncé's 'Lemonade'."
       }
     ]
   }
