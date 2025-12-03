@@ -1,7 +1,8 @@
 
 'use client';
-import type { ServiceVariant, Addon, ServiceCategory } from '@/lib/types';
-import { useState, useMemo, useEffect } from 'react';
+
+import type { ServiceCategory, ServiceVariant, Addon } from '@/lib/types';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -25,7 +26,7 @@ import {
   Wand2,
   PartyPopper,
 } from 'lucide-react';
-import { Checkbox } from './ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 import { StyleSuggestor } from './style-suggestor';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -34,70 +35,82 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { collection, addDoc, getDocs, Timestamp, query, where } from 'firebase/firestore';
-import { useFirebase, useUser } from '@/firebase';
+import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { serviceCategories } from '@/lib/data';
-import { addons as addonData } from '@/lib/addons';
+import { useFirestore } from '@/firebase';
+
 
 interface Booking {
   id: string;
   customerName: string;
   serviceName: string;
-  date: string;
+  date: string; // The formatted date string, e.g., "Wednesday, October 22, 2025"
+  time: string;
   status: 'pending' | 'confirmed';
 }
 
-export function BookingFlow() {
-  const [step, setStep] = useState<'policy' | 'service' | 'addons' | 'date' | 'payment' | 'upload' | 'confirmation'>('policy');
+interface BookingFlowProps {
+  serviceCategories: ServiceCategory[];
+  addons: Addon[];
+}
+
+export function BookingFlow({ serviceCategories, addons }: BookingFlowProps) {
+  const [step, setStep] = useState<
+    'policy' | 'service' | 'addons' | 'date' | 'payment' | 'upload' | 'confirmation'
+  >('policy');
   const [selectedVariant, setSelectedVariant] = useState<ServiceVariant | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    undefined
+  );
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('luxuryhairfg@gmail.com');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
-  const [existingBookings, setExistingBookings] = useState<Booking[]>([]);
-  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const { toast } = useToast();
-  const { firestore: db } = useFirebase();
-  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
 
-  const addons = addonData;
-
-  useEffect(() => {
-    if (!db) {
-        setIsLoadingBookings(false);
-        return;
-    };
-    
+  const fetchBookings = useCallback(() => {
+    setIsLoadingBookings(true);
     const bookingsCol = collection(db, 'bookings');
-    const q = query(bookingsCol, where("status", "==", "confirmed"));
-
-    getDocs(q).then((snapshot) => {
-        const bookingsList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })) as Booking[];
-        setExistingBookings(bookingsList);
-        setIsLoadingBookings(false);
-    }).catch(serverError => {
+    getDocs(bookingsCol)
+      .then(bookingsSnapshot => {
+        const existingBookings = bookingsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Booking[];
+        setBookings(existingBookings);
+      })
+      .catch(serverError => {
         const permissionError = new FirestorePermissionError({
-            path: bookingsCol.path,
-            operation: 'list',
+          path: bookingsCol.path,
+          operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
+        toast({
+          variant: "destructive",
+          title: "Could not load schedule",
+          description: "Failed to fetch existing appointments. Please try refreshing.",
+        });
+      })
+      .finally(() => {
         setIsLoadingBookings(false);
-    });
+      });
+  }, [db, toast]);
 
-  }, [db]);
 
+  useEffect(() => {
+    if (step === 'date') {
+      fetchBookings();
+    }
+  }, [step, fetchBookings]);
 
-  const handleVariantSelect = (variant: ServiceVariant) => {
+  const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
     setSelectedVariant(variant);
+    setSelectedCategory(category);
     setStep('addons');
   };
 
@@ -129,14 +142,16 @@ export function BookingFlow() {
   const resetFlow = () => {
     setStep('policy');
     setSelectedVariant(null);
+    setSelectedCategory(null);
     setSelectedAddons([]);
     setSelectedDate(undefined);
     setReceiptFile(null);
     setReceiptPreview(null);
     setCustomerName('');
-    setCustomerEmail('luxuryhairfg@gmail.com');
+    setCustomerEmail('');
     setCustomerPhone('');
     setIsConfirming(false);
+    setBookings([]);
   };
 
   const getTotalPrice = () => {
@@ -158,7 +173,7 @@ export function BookingFlow() {
   };
   
   const handleConfirmation = async () => {
-    if (!selectedVariant || !selectedDate || !receiptPreview || !customerName || !customerEmail || !customerPhone || !db) {
+    if (!selectedVariant || !selectedDate || !receiptPreview || !customerName || !customerEmail || !customerPhone) {
         toast({
             variant: 'destructive',
             title: 'Missing Information',
@@ -183,6 +198,7 @@ export function BookingFlow() {
         customerPhone,
         serviceName: selectedVariant.name,
         date: dateStr,
+        time: "All Day",
         totalPrice: getTotalPrice(),
         addons: selectedAddons.map(a => a.name),
         receiptDataUri: receiptPreview,
@@ -210,6 +226,7 @@ A client has booked an appointment and uploaded their payment receipt. Please re
 *Booking Details:*
 - *Service:* ${selectedVariant.name}
 - *Date:* ${dateStr}
+- *Time:* All Day
 - *Total Price:* $${getTotalPrice().toFixed(2)}${addonsText}
 
 Please check your admin dashboard to view the receipt and confirm the booking.
@@ -243,28 +260,19 @@ Please check your admin dashboard to view the receipt and confirm the booking.
     return receiptFile && customerName && customerEmail && customerPhone;
   }
   
- const isDateBooked = (date: Date) => {
-    if (!existingBookings) return false;
-    return existingBookings.some(booking => {
-      // Check status first
-      if (booking.status !== 'confirmed') return false;
-      
-      try {
-        // Parse the stored date string. Assumes format "Weekday, Month Day, Year"
+  const isDateBooked = (date: Date) => {
+    return bookings
+      .filter(booking => booking.status === 'confirmed')
+      .some(booking => {
         const bookedDate = new Date(booking.date);
-        
-        // Compare year, month, and day
         return (
           bookedDate.getFullYear() === date.getFullYear() &&
           bookedDate.getMonth() === date.getMonth() &&
           bookedDate.getDate() === date.getDate()
         );
-      } catch (e) {
-        console.error("Invalid date format in booking:", booking);
-        return false;
-      }
-    });
+      });
   };
+
 
   const renderPolicy = () => (
     <div className="container py-8 md:py-12 px-4 md:px-6">
@@ -361,20 +369,21 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <StyleSuggestor />
         </div>
       </div>
+
       <Accordion type="single" collapsible className="w-full">
-        {serviceCategories.sort((a, b) => a.name.localeCompare(b.name)).map((category) => (
-          <AccordionItem value={category.name} key={category.id}>
+        {serviceCategories.map(category => (
+          <AccordionItem value={category.id} key={category.id}>
             <AccordionTrigger className="text-lg md:text-xl font-headline text-primary hover:no-underline">
-                 <div className="flex items-center gap-4 text-left">
-                     <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden flex-shrink-0">
-                         <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
-                     </div>
+                <div className="flex items-center gap-4 text-left">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden flex-shrink-0">
+                        <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
+                    </div>
                     {category.name}
-                 </div>
+                </div>
             </AccordionTrigger>
             <AccordionContent>
               <div className="border-l-2 border-primary/20 pl-4 ml-6 md:ml-12">
-                {category.variants.sort((a,b) => a.name.localeCompare(b.name)).map((variant, index) => (
+                {category.variants.map((variant, index) => (
                   <div key={variant.id}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
                       <div className="flex-1 pr-4">
@@ -386,7 +395,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                           <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
                           <p className="text-sm text-muted-foreground">{variant.duration}</p>
                         </div>
-                        <Button onClick={() => handleVariantSelect({ ...variant, image: category.image })} variant="outline">
+                        <Button onClick={() => handleVariantSelect(variant, category)} variant="outline">
                           Select
                         </Button>
                       </div>
@@ -419,28 +428,24 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {addons && addons.length > 0 ? (
-                        addons.map(addon => (
-                            <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
-                            <div className="flex items-center gap-4">
-                                    <Checkbox 
-                                    id={addon.id} 
-                                    onCheckedChange={() => handleAddonToggle(addon)}
-                                    checked={!!selectedAddons.find(a => a.id === addon.id)}
-                                    />
-                                    <label htmlFor={addon.id} className="flex flex-col">
-                                        <span className="font-semibold text-primary">{addon.name}</span>
-                                        <span className="text-sm text-muted-foreground">{addon.duration}</span>
-                                    </label>
-                                </div>
-                                <div className="text-base md:text-lg font-bold text-foreground text-right">
-                                    +${addon.price.toFixed(2)}
-                                </div>
+                    {addons.map(addon => (
+                        <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
+                           <div className="flex items-center gap-4">
+                                <Checkbox 
+                                  id={addon.id} 
+                                  onCheckedChange={() => handleAddonToggle(addon)}
+                                  checked={!!selectedAddons.find(a => a.id === addon.id)}
+                                />
+                                <label htmlFor={addon.id} className="flex flex-col">
+                                    <span className="font-semibold text-primary">{addon.name}</span>
+                                    <span className="text-sm text-muted-foreground">{addon.duration}</span>
+                                </label>
                             </div>
-                        ))
-                    ) : (
-                        <p className="text-center text-muted-foreground py-8">No add-ons available.</p>
-                    )}
+                            <div className="text-base md:text-lg font-bold text-foreground text-right">
+                                +${addon.price.toFixed(2)}
+                            </div>
+                        </div>
+                    ))}
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div className="text-xl font-bold text-primary">
@@ -456,7 +461,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
   }
 
   const renderDateSelection = () => {
-    if (!selectedVariant) return null;
+    if (!selectedVariant || !selectedCategory) return null;
 
     return (
       <div className="container py-8 px-4 md:px-6">
@@ -468,15 +473,13 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <Card>
               <CardHeader className="p-0">
                 <div className="relative w-full h-48">
-                  {selectedVariant.image && (
-                      <Image
-                        src={selectedVariant.image}
-                        alt={selectedVariant.name}
-                        fill
-                        style={{ objectFit: 'contain' }}
-                        data-ai-hint={`${selectedVariant.name} style`}
-                      />
-                  )}
+                   <Image
+                    src={selectedCategory.image}
+                    alt={selectedCategory.name}
+                    fill
+                    style={{ objectFit: 'contain' }}
+                    data-ai-hint={`${selectedCategory.name}`}
+                  />
                 </div>
                 <div className="p-6">
                   <Badge variant="secondary" className="mb-2">Selected Service</Badge>
@@ -529,9 +532,11 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     disabled={(date) => {
                       const yesterday = new Date();
                       yesterday.setDate(yesterday.getDate() - 1);
+                      // Disable past dates and Sundays
                       if (date < yesterday || date.getDay() === 0) {
                         return true;
                       }
+                      // Disable dates that are already booked
                       return isDateBooked(date);
                     }}
                     className="rounded-md border"
@@ -751,5 +756,3 @@ Please check your admin dashboard to view the receipt and confirm the booking.
       return renderPolicy();
   }
 }
-
-    

@@ -1,139 +1,178 @@
+
 import type { ServiceCategory } from './types';
 
 export const serviceCategories: ServiceCategory[] = [
   {
-    "id": "cat_001",
-    "name": "Box Braids",
-    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-45093783.jpeg",
-    "variants": [
-      {
-        "id": "var_001",
-        "name": "Small Box Braids",
-        "duration": "4 hours",
-        "price": 250,
-        "description": "Small, intricate box braids for a classic look."
-      },
-      {
-        "id": "var_002",
-        "name": "Medium Box Braids",
-        "duration": "3 hours",
-        "price": 200,
-        "description": "Medium-sized box braids, a popular and versatile choice."
-      },
-      {
-        "id": "var_003",
-        "name": "Large Box Braids",
-        "duration": "2.5 hours",
-        "price": 180,
-        "description": "Large box braids for a bold and beautiful statement."
-      },
-      {
-        "id": "var_004",
-        "name": "Jumbo Box Braids",
-        "duration": "2 hours",
-        "price": 150,
-        "description": "Extra large, jumbo-sized box braids for a quick and stylish look."
-      }
+    id: 'bob-braids',
+    name: 'Bob Braids',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/bob.png',
+    variants: [
+      { id: 'bob-s', name: 'Bob Braids Small size', duration: '5 hours', price: 350.0, description: 'hair included' },
+      { id: 'bob-m', name: 'Bob Braids Medium size', duration: '4 hours', price: 300.0, description: 'hair included.' },
+      { id: 'bob-l', name: 'Bob Braids Large size', duration: '3 hours', price: 200.0, description: 'Hair included.' },
+    ],
+  },
+  {
+    id: 'bohemian-braids',
+    name: 'Bohemian Braids',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/boham.png',
+    variants: [
+      { id: 'bohemian-s', name: 'Bohemian Knotless Braids, Small Size.', duration: '5 hours', price: 350.0, description: 'Hair is Included' },
+      { id: 'bohemian-m', name: 'Bohemian Knotless Braids, Medium Size.', duration: '4 hours', price: 280.0, description: 'Hair is Included' },
+      { id: 'bohemian-l', name: 'Bohemian Knotless Braids, Large Size.', duration: '3 hours', price: 200.0, description: 'Hair is included.' },
+      { id: 'bohemian-bob-s', name: 'Bohemian knotless braids Bob small size', duration: '5 hours', price: 370.0, description: 'hair is concluded' },
+      { id: 'bohemian-bob-m', name: 'Bohemian knotless braids Bob medium size', duration: '4 hours', price: 280.0, description: 'hair is concluded' },
+    ],
+  },
+  {
+    id: 'box-braids',
+    name: 'Box Braids',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-47890745.jpeg?1695331006',
+    variants: [
+      { id: 'box-s', name: 'Box Braid, Small Size.', duration: '5 hours', price: 350.0, description: 'Hair is Included' },
+      { id: 'box-m', name: 'Box Braid, Medium Size.', duration: '4 hours', price: 280.0, description: 'Hair is Included.' },
+      { id: 'box-l', name: 'Box Braid, Large Size, Hair Included.', duration: '3 hours', price: 200.0, description: '' },
+    ],
+  },
+  {
+    id: 'butterfly-locs',
+    name: 'Butterfly Locs',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-47892318.jpeg?1695331296',
+    variants: [
+      { id: 'distressed-s', name: 'Distressed Locks Small Size.', duration: '4 hours 30 minutes', price: 320.0, description: 'Hair is not included.' },
+      { id: 'distressed-m', name: 'Distressed Locks Medium Size.', duration: '3 hours 30 minutes', price: 280.0, description: 'Hair is not included' },
+      { id: 'butterfly-bob-s', name: 'butterfly locks (bob) Small Size.', duration: '5 hours', price: 350.0, description: 'Hair is not included' },
+      { id: 'butterfly-bob-m', name: 'Butterfly locks (bob) Medium Size.', duration: '4 hours', price: 280.0, description: 'Hair is not included' },
+      { id: 'butterfly-bob-l', name: 'Butterfly locks (bob) Large Size.', duration: '3 hours', price: 180.0, description: 'Hair is not Included' },
+      { id: 'loc-extensions', name: 'Loc extensions', duration: '4 hours', price: 200.0, description: '' },
+    ],
+  },
+  {
+    id: 'crochet-braids',
+    name: 'Crochet Braids',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/crochet.png',
+    variants: [
+      { id: 'crochet', name: 'Crochet Braids', duration: '2 hours', price: 150.0, description: 'Hair is not included' },
+    ],
+  },
+  {
+    id: 'fulani-ponytail',
+    name: 'Fulani Ponytail',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/fulani-ponytail.png',
+    variants: [
+        { id: 'pony-xs', name: 'PonyTail Feed in Braids Extra small', duration: '5 hours 30 minutes', price: 350.0, description: 'hair is included' },
+        { id: 'pony-s', name: 'PonyTail Feed in Braids small', duration: '5 hours', price: 350.0, description: 'Hair is Included' },
+        { id: 'pony-m', name: 'PonyTail Feed in Braids Medium', duration: '4 hours', price: 280.0, description: 'Hair is Included' },
+        { id: 'pony-l', name: 'PonyTail Feed in Braids Large (Stitch)', duration: '3 hours', price: 200.0, description: 'Hair is Included.' },
     ]
   },
   {
-    "id": "cat_002",
-    "name": "Knotless Braids",
-    "image": "https://cdn-s.acuityscheduling.com/appointmentType-thumb-45093864.jpeg",
-    "variants": [
-      {
-        "id": "var_005",
-        "name": "Small Knotless Braids",
-        "duration": "4.5 hours",
-        "price": 300,
-        "description": "Small, lightweight knotless braids that are gentle on your scalp."
-      },
-      {
-        "id": "var_006",
-        "name": "Medium Knotless Braids",
-        "duration": "3.5 hours",
-        "price": 250,
-        "description": "Medium-sized knotless braids for a natural and seamless look."
-      },
-      {
-        "id": "var_007",
-        "name": "Large Knotless Braids",
-        "duration": "3 hours",
-        "price": 200,
-        "description": "Large, beautiful knotless braids that offer style and comfort."
-      },
-      {
-        "id": "var_008",
-        "name": "Jumbo Knotless Braids",
-        "duration": "2.5 hours",
-        "price": 180,
-        "description": "Jumbo knotless braids for a quick, pain-free, and stunning hairstyle."
-      }
+    id: 'fulani-braid',
+    name: 'Fulani Braid',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47891788.jpeg?1695332411',
+    variants: [
+      { id: 'fulani-m', name: 'Tribe Braids (Fulani braids) medium size', duration: '4 hours 30 minutes', price: 280.0, description: 'Hair Included' },
+      { id: 'fulani-s', name: 'Tribe Braids (Fulani braids) small size', duration: '5 hours', price: 350.0, description: 'Hair Included' },
+    ],
+  },
+  {
+    id: 'goddess-braids',
+    name: 'Goddess Braids',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/goddess.png',
+    variants: [
+      { id: 'goddess-2', name: 'Goddes Braids (2Braids)', duration: '1 hour', price: 200.0, description: 'hair is included' },
+    ],
+  },
+  {
+    id: 'individual-crochet-locs',
+    name: 'Individual crochet locs',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/individual.png',
+    variants: [
+      { id: 'ind-crochet', name: 'Individual Crochets Locks', duration: '4 hours', price: 280.0, description: 'Hair is not incuded' },
+    ],
+  },
+  {
+    id: 'knotless-braids',
+    name: 'Knotless Braids',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47890017.jpeg?1695345740',
+    variants: [
+        { id: 'french-braids', name: 'French braids', duration: '6 hours', price: 500.0, description: 'Hair is included' },
+        { id: 'knotless-s', name: 'Knotless braids small size', duration: '5 hours', price: 350.0, description: 'Hair is included.' },
+        { id: 'knotless-m', name: 'Knotless Braid Medium Size.', duration: '4 hours', price: 280.0, description: 'Hair is Included.' },
+        { id: 'knotless-l', name: 'Knotless Braid Large Size', duration: '3 hours 30 minutes', price: 200.0, description: 'Hair included' },
+        { id: 'knotless-tri-s', name: 'knotless Braid Triangle part, Small Size', duration: '5 hours', price: 370.0, description: 'Hair Included.' },
+        { id: 'knotless-tri-m', name: 'knotless Braid Triangle part, Medium Size', duration: '4 hours', price: 300.0, description: 'Hair Included.' },
+        { id: 'knotless-tri-l', name: 'knotless Braid Triangle part, Large Size', duration: '3 hours', price: 200.0, description: 'Hair Included.' },
+    ],
+  },
+  {
+    id: 'lemonade-braids',
+    name: 'Lemonade Braids',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47893929.jpeg?1695269314',
+    variants: [
+        { id: 'lemonade', name: 'Lemonade braids', duration: '4 hours', price: 250.0, description: 'hair is included' },
     ]
   },
   {
-    "id": "cat_003",
-    "name": "Boho/Goddess Braids",
-    "image": "https://tse4.mm.bing.net/th?id=OIP.3i3bYpB0bY6I-D4bXz_iQAHaHa&pid=Api&P=0&h=220",
-    "variants": [
-      {
-        "id": "var_009",
-        "name": "Small Boho Braids",
-        "duration": "4.5 hours",
-        "price": 350,
-        "description": "Small, bohemian-style braids with curly ends for a free-spirited look."
-      },
-      {
-        "id": "var_010",
-        "name": "Medium Boho Braids",
-        "duration": "3.5 hours",
-        "price": 300,
-        "description": "Medium-sized boho braids that blend a chic and carefree vibe."
-      },
-      {
-        "id": "var_011",
-        "name": "Large Boho Braids",
-        "duration": "3 hours",
-        "price": 250,
-        "description": "Large boho braids for a voluminous, textured, and stylish appearance."
-      }
-    ]
+    id: 'senegalese-twist',
+    name: 'Senegalese Twist',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/senegalese.png',
+    variants: [
+        { id: 'island-m', name: 'Island twist medium size', duration: '5 hours', price: 300.0, description: 'Hair is included, if you want human hair for the bohemian is $100 extra or you can bring your own hair.' },
+        { id: 'island-s', name: 'Island twist small size', duration: '6 hours', price: 400.0, description: 'Hair is included, if you want human hair for the bohemian is $100 extra or you can bring your own hair.' },
+        { id: 'island-l', name: 'Island twist large size', duration: '3 hours', price: 250.0, description: 'Hair is included, if you want human hair for the bohemian is $100 extra or you can bring your own hair' },
+        { id: 'senegalese-s', name: 'Senegalese Twist Small', duration: '5 hours', price: 350.0, description: 'Hair Included.' },
+        { id: 'senegalese-m', name: 'Senegalese Twist Medium', duration: '4 hours', price: 280.0, description: 'Hair Included.' },
+        { id: 'senegalese-l', name: 'Senegalese Twist Large.', duration: '3 hours', price: 200.0, description: 'Hair Included' },
+        { id: 'micro-twist', name: 'Micro twist', duration: '12 hours', price: 1000.0, description: '' },
+    ],
   },
   {
-    "id": "cat_004",
-    "name": "Cornrows",
-    "image": "https://tse1.mm.bing.net/th?id=OIP.f-4X-V3TIEp-rq0k-f1pCwHaHa&pid=Api&rs=1&c=1&qlt=95&w=121&h=121",
-    "variants": [
-      {
-        "id": "var_012",
-        "name": "Small Feed-in Cornrows",
-        "duration": "3 hours",
-        "price": 180,
-        "description": "Small, neat feed-in cornrows for a sleek and intricate style."
-      },
-      {
-        "id": "var_013",
-        "name": "Medium Feed-in Cornrows",
-        "duration": "2 hours",
-        "price": 150,
-        "description": "Medium-sized feed-in cornrows that are both stylish and practical."
-      },
-      {
-        "id": "var_014",
-        "name": "Large Feed-in Cornrows",
-        "duration": "1.5 hours",
-        "price": 120,
-        "description": "Large feed-in cornrows for a quick and bold look."
-      },
-      {
-        "id": "var_015",
-        "name": "Lemonade Braids",
-        "duration": "3 hours",
-        "price": 200,
-        "description": "Stylish side-swept cornrows inspired by Beyoncé's 'Lemonade'."
-      }
-    ]
-  }
+    id: 'sew-in',
+    name: 'Sew-In',
+    image: 'https://v0-hair-salon-website-design-six.vercel.app/images/sew.png',
+    variants: [
+      { id: 'sew-in-closure', name: 'Sew-in (Closure)', duration: '2 hours', price: 180.0, description: 'Hair is not included' },
+      { id: 'sew-in-leave-out', name: 'Sew-in (Leave Out)', duration: '2 hours', price: 150.0, description: 'Hair is not Included.' },
+    ],
+  },
+  {
+    id: 'stitch-braids',
+    name: 'Stitch Braids',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-47891527.jpg?1686174561',
+    variants: [
+        { id: 'stitch-12', name: 'Stitch Braids (12 Braids)', duration: '3 hours', price: 180.0, description: 'Hair Included' },
+        { id: 'stitch-8', name: 'Stitch Braids (8 Braids)', duration: '2 hours', price: 150.0, description: 'Hair Included' },
+        { id: 'stitch-6', name: 'Stitch Braids (6 Braids)', duration: '1 hour 30 minutes', price: 135.0, description: 'Hair Included' },
+        { id: 'stitch-s', name: 'Stitch Braid Small', duration: '3 hours 30 minutes', price: 250.0, description: 'Hair is included.' },
+    ],
+  },
+  {
+    id: 'touch-up',
+    name: 'Touch up',
+    image: 'https://tse4.mm.bing.net/th/id/OIP.nTFZbK-TIT5ChU7We8SrjAAAAA?cb=ucfimg2&pid=ImgDet&ucfimg=1&w=178&h=178&c=7&dpr=1.5&o=7&rm=3',
+    variants: [
+      { id: 'touch-up', name: 'Touch up', duration: '2 hours', price: 100.0, description: 'only two rolls in the front, and one roll at the back.' },
+    ],
+  },
+  {
+    id: 'passion-twists',
+    name: 'Passion Twists',
+    image: 'https://cdn-s.acuityscheduling.com/appointmentType-thumb-54027021.jpeg?1697474473',
+    variants: [
+      { id: 'passion-s', name: 'passion twists small size', duration: '5 hours', price: 350.0, description: 'Hair is not included' },
+      { id: 'passion-m', name: 'passion twists medium size', duration: '4 hours', price: 250.0, description: 'Hair is not included' },
+      { id: 'passion-l', name: 'passion twists large', duration: '3 hours', price: 200.0, description: 'Hair is not included' },
+    ],
+  },
+  {
+    id: 'wig-install',
+    name: 'Wig Install',
+    image: 'https://tse1.mm.bing.net/th/id/OIP.XzbUF4enTs_pLcE7LTyYXAHaHa?cb=ucfimg2&pid=ImgDet&ucfimg=1&w=178&h=178&c=7&dpr=1.5&o=7&rm=3',
+    variants: [
+      { id: 'wig-install', name: 'wig install', duration: '2 hours', price: 100.0, description: '' },
+    ],
+  },
 ];
 
 export const availableTimes: string[] = [
@@ -146,16 +185,4 @@ export const availableTimes: string[] = [
   '12:00 PM',
   '12:30 PM',
   '01:00 PM',
-  '01:30 PM',
-  '02:00 PM',
-  '02:30 PM',
-  '03:00 PM',
-  '03:30 PM',
-  '04:00 PM',
-  '04:30 PM',
-  '05:00 PM',
-  '05:30 PM',
-  '06:00 PM',
-  '06:30 PM',
-  '07:00 PM',
 ];
