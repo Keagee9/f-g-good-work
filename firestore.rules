@@ -38,25 +38,25 @@ service cloud.firestore {
     /**
      * @description Allows anyone to read service details, but only admin can write.
      * @path /services/{serviceId}
-     * @allow (get, list): Any user can read service details. Admins also have read access.
-     * @allow (create, update, delete): Only admin can manage services.
+     * @allow (read): Any user, including admins, can read service details.
+     * @allow (write): Only admin can manage services.
      * @principle Allows open read access to service details, admin-only for writes.
      */
     match /services/{serviceId} {
-      allow get, list: if true;
-      allow create, update, delete: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
      /**
      * @description Allows anyone to read add-on details, but only admin can write.
      * @path /addons/{addonId}
-     * @allow (get, list): Any user can read addon details. Admins also have read access.
-     * @allow (create, update, delete): Only admin can manage addons.
+     * @allow (read): Any user, including admins, can read addon details.
+     * @allow (write): Only admin can manage addons.
      * @principle Allows open read access to addon details, admin-only for writes.
      */
     match /addons/{addonId} {
-      allow get, list: if true;
-      allow create, update, delete: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
     /**
