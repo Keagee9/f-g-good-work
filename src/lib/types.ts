@@ -4,8 +4,9 @@ export interface ServiceVariant {
   duration: string;
   price: number;
   description: string;
-  category: string;
-  image: string;
+  // These are optional because they are inherited from the category
+  category?: string;
+  image?: string;
 }
 
 export interface ServiceCategory {

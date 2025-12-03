@@ -1,7 +1,7 @@
 
 'use client';
-import type { ServiceVariant, Addon } from '@/lib/types';
-import { useState, useEffect, useMemo } from 'react';
+import type { ServiceVariant, Addon, ServiceCategory } from '@/lib/types';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -34,11 +34,13 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { collection, addDoc, getDocs, Timestamp, query, where, orderBy, doc } from 'firebase/firestore';
-import { useFirebase, useMemoFirebase } from '@/firebase';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, addDoc, getDocs, Timestamp, query, where } from 'firebase/firestore';
+import { useFirebase, useUser } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { serviceCategories } from '@/lib/data';
+import { addons } from '@/lib/addons';
+import { useCollection } from '@/firebase/firestore/use-collection';
 
 interface Booking {
   id: string;
@@ -47,23 +49,6 @@ interface Booking {
   date: string;
   status: 'pending' | 'confirmed';
 }
-
-// Group services by category name
-const groupServicesByCategory = (services: ServiceVariant[] | null) => {
-  if (!services) return {};
-  return services.reduce((acc, service) => {
-    const categoryName = service.category || 'Uncategorized';
-    if (!acc[categoryName]) {
-      acc[categoryName] = {
-        image: service.image || 'https://placehold.co/400x400/orange/white?text=Service',
-        variants: [],
-      };
-    }
-    acc[categoryName].variants.push(service);
-    return acc;
-  }, {} as Record<string, { image: string, variants: ServiceVariant[] }>);
-};
-
 
 export function BookingFlow() {
   const [step, setStep] = useState<'policy' | 'service' | 'addons' | 'date' | 'payment' | 'upload' | 'confirmation'>('policy');
@@ -79,22 +64,18 @@ export function BookingFlow() {
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
 
-  // Fetching data from Firestore
-  const servicesRef = useMemoFirebase(() => db ? query(collection(db, 'services'), orderBy('name')) : null, [db]);
-  const { data: servicesFromDB, isLoading: isLoadingServices } = useCollection<ServiceVariant>(servicesRef);
-
-  const addonsRef = useMemoFirebase(() => db ? query(collection(db, 'addons'), orderBy('name')) : null, [db]);
-  const { data: addonsFromDB, isLoading: isLoadingAddons } = useCollection<Addon>(addonsRef);
-
-  const existingBookingsRef = useMemoFirebase(() => db ? query(collection(db, 'bookings'), where("status", "==", "confirmed")) : null, [db]);
-  const { data: existingBookings, isLoading: isLoadingBookings } = useCollection<Booking>(existingBookingsRef);
+  const existingBookingsRef = useMemo(() => db ? query(collection(db, 'bookings'), where("status", "==", "confirmed")) : null, [db]);
+  const { data: existingBookings, isLoading: isLoadingBookings } = useCollection<Booking>(existingBookingsRef as any);
 
   const groupedServices = useMemo(() => {
-    return groupServicesByCategory(servicesFromDB);
-  }, [servicesFromDB]);
+    return serviceCategories.reduce((acc, category) => {
+        acc[category.name] = category;
+        return acc;
+    }, {} as Record<string, ServiceCategory>)
+  }, []);
 
-  const handleVariantSelect = (variant: ServiceVariant) => {
-    setSelectedVariant(variant);
+  const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
+    setSelectedVariant({ ...variant, category: category.name, image: category.image });
     setStep('addons');
   };
 
@@ -358,11 +339,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <StyleSuggestor />
         </div>
       </div>
-      {isLoadingServices ? (
-           <div className="flex justify-center items-center h-64">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            </div>
-      ) : Object.keys(groupedServices).length === 0 ? (
+      {Object.keys(groupedServices).length === 0 ? (
            <div className="text-center py-16">
               <p className="text-muted-foreground">No services are available at this time.</p>
               <p className="text-sm text-muted-foreground mt-4">
@@ -371,19 +348,19 @@ Please check your admin dashboard to view the receipt and confirm the booking.
           </div>
       ) : (
         <Accordion type="single" collapsible className="w-full">
-            {Object.entries(groupedServices).map(([categoryName, { image, variants }]) => (
-            <AccordionItem value={categoryName} key={categoryName}>
+            {Object.values(groupedServices).map((category) => (
+            <AccordionItem value={category.name} key={category.id}>
                 <AccordionTrigger className="text-lg md:text-xl font-headline text-primary hover:no-underline">
                     <div className="flex items-center gap-4 text-left">
                         <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden flex-shrink-0">
-                            <Image src={image} alt={categoryName} fill style={{objectFit: 'contain'}} data-ai-hint={categoryName} />
+                            <Image src={category.image} alt={category.name} fill style={{objectFit: 'contain'}} data-ai-hint={category.name} />
                         </div>
-                        {categoryName}
+                        {category.name}
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
                 <div className="border-l-2 border-primary/20 pl-4 ml-6 md:ml-12">
-                    {variants.sort((a,b) => a.name.localeCompare(b.name)).map((variant, index) => (
+                    {category.variants.sort((a,b) => a.name.localeCompare(b.name)).map((variant, index) => (
                     <div key={variant.id}>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
                         <div className="flex-1 pr-4">
@@ -395,12 +372,12 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                             <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
                             <p className="text-sm text-muted-foreground">{variant.duration}</p>
                             </div>
-                            <Button onClick={() => handleVariantSelect(variant)} variant="outline">
+                            <Button onClick={() => handleVariantSelect(variant, category)} variant="outline">
                             Select
                             </Button>
                         </div>
                         </div>
-                        {index < variants.length - 1 && <Separator />}
+                        {index < category.variants.length - 1 && <Separator />}
                     </div>
                     ))}
                 </div>
@@ -429,12 +406,8 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {isLoadingAddons ? (
-                        <div className="flex justify-center items-center h-40">
-                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        </div>
-                    ) : addonsFromDB && addonsFromDB.length > 0 ? (
-                        addonsFromDB.map(addon => (
+                    {addons && addons.length > 0 ? (
+                        addons.map(addon => (
                             <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
                             <div className="flex items-center gap-4">
                                     <Checkbox 
