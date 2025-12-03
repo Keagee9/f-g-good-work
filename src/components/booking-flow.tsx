@@ -1,6 +1,7 @@
+
 'use client';
 import type { ServiceVariant, Addon, ServiceCategory } from '@/lib/types';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -33,12 +34,10 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { collection, addDoc, getDocs, Timestamp, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, Timestamp, query, where, orderBy } from 'firebase/firestore';
 import { useFirebase, useUser, useMemoFirebase } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { serviceCategories } from '@/lib/data';
-import { addons } from '@/lib/addons';
 import { useCollection } from '@/firebase/firestore/use-collection';
 
 interface Booking {
@@ -63,18 +62,35 @@ export function BookingFlow() {
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
 
+  // Firestore data hooks
+  const servicesRef = useMemoFirebase(() => db ? query(collection(db, 'services'), orderBy('category'), orderBy('name')) : null, [db]);
+  const { data: services, isLoading: isLoadingServices } = useCollection<ServiceVariant>(servicesRef);
+
+  const addonsRef = useMemoFirebase(() => db ? query(collection(db, 'addons'), orderBy('name')) : null, [db]);
+  const { data: addons, isLoading: isLoadingAddons } = useCollection<Addon>(addonsRef);
+
   const existingBookingsRef = useMemoFirebase(() => db ? query(collection(db, 'bookings'), where("status", "==", "confirmed")) : null, [db]);
   const { data: existingBookings, isLoading: isLoadingBookings } = useCollection<Booking>(existingBookingsRef);
 
   const groupedServices = useMemo(() => {
-    return serviceCategories.reduce((acc, category) => {
-        acc[category.name] = category;
+    if (!services) return {};
+    return services.reduce((acc, service) => {
+        const categoryName = service.category || 'Uncategorized';
+        if (!acc[categoryName]) {
+            acc[categoryName] = {
+                id: categoryName,
+                name: categoryName,
+                image: service.image || 'https://placehold.co/400x400/orange/white?text=No+Image',
+                variants: []
+            };
+        }
+        acc[categoryName].variants.push(service);
         return acc;
-    }, {} as Record<string, ServiceCategory>)
-  }, []);
+    }, {} as Record<string, ServiceCategory>);
+  }, [services]);
 
-  const handleVariantSelect = (variant: ServiceVariant, category: ServiceCategory) => {
-    setSelectedVariant({ ...variant, category: category.name, image: category.image });
+  const handleVariantSelect = (variant: ServiceVariant) => {
+    setSelectedVariant(variant);
     setStep('addons');
   };
 
@@ -135,7 +151,7 @@ export function BookingFlow() {
   };
   
   const handleConfirmation = async () => {
-    if (!selectedVariant || !selectedDate || !receiptPreview || !customerName || !customerEmail || !customerPhone) {
+    if (!selectedVariant || !selectedDate || !receiptPreview || !customerName || !customerEmail || !customerPhone || !db) {
         toast({
             variant: 'destructive',
             title: 'Missing Information',
@@ -338,7 +354,11 @@ Please check your admin dashboard to view the receipt and confirm the booking.
             <StyleSuggestor />
         </div>
       </div>
-      {Object.keys(groupedServices).length === 0 ? (
+      {isLoadingServices ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      ) : Object.keys(groupedServices).length === 0 ? (
            <div className="text-center py-16">
               <p className="text-muted-foreground">No services are available at this time.</p>
               <p className="text-sm text-muted-foreground mt-4">
@@ -347,7 +367,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
           </div>
       ) : (
         <Accordion type="single" collapsible className="w-full">
-            {Object.values(groupedServices).map((category) => (
+            {Object.values(groupedServices).sort((a, b) => a.name.localeCompare(b.name)).map((category) => (
             <AccordionItem value={category.name} key={category.id}>
                 <AccordionTrigger className="text-lg md:text-xl font-headline text-primary hover:no-underline">
                     <div className="flex items-center gap-4 text-left">
@@ -371,7 +391,7 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                             <p className="text-lg font-bold text-foreground">${variant.price.toFixed(2)}</p>
                             <p className="text-sm text-muted-foreground">{variant.duration}</p>
                             </div>
-                            <Button onClick={() => handleVariantSelect(variant, category)} variant="outline">
+                            <Button onClick={() => handleVariantSelect(variant)} variant="outline">
                             Select
                             </Button>
                         </div>
@@ -405,7 +425,11 @@ Please check your admin dashboard to view the receipt and confirm the booking.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {addons && addons.length > 0 ? (
+                    {isLoadingAddons ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        </div>
+                    ) : addons && addons.length > 0 ? (
                         addons.map(addon => (
                             <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border">
                             <div className="flex items-center gap-4">

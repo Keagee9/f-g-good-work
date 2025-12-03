@@ -10,11 +10,11 @@
         "name": { "type": "string", "description": "Name of the service." },
         "description": { "type": "string", "description": "Detailed description of the service." },
         "price": { "type": "number", "description": "Price of the service." },
-        "imageUrl": { "type": "string", "description": "URL of the image representing the service.", "format": "uri" },
+        "image": { "type": "string", "description": "URL of the image representing the service category.", "format": "uri" },
         "category": { "type": "string", "description": "The category of the service (e.g., 'Bob Braids')." },
         "duration": { "type": "string", "description": "The duration of the service." }
       },
-      "required": ["id", "name", "description", "price", "category", "duration"]
+      "required": ["id", "name", "description", "price", "category", "duration", "image"]
     },
     "Addon": {
       "$schema": "http://json-schema.org/draft-07/schema#",

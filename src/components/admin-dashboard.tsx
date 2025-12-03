@@ -2,16 +2,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, doc, onSnapshot, orderBy, query, updateDoc, Timestamp, writeBatch, getDocs, collectionGroup } from 'firebase/firestore';
+import { collection, doc, onSnapshot, orderBy, query, updateDoc, Timestamp, writeBatch, getDocs, collectionGroup, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, RefreshCw, LogOut, FileImage, Edit, Save, X, Settings } from 'lucide-react';
+import { Loader2, RefreshCw, LogOut, FileImage, Edit, Save, X, Settings, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
-import { useFirebase, useUser } from '@/firebase';
+import { useFirebase, useUser, useMemoFirebase } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email-flow';
@@ -38,6 +38,239 @@ interface Booking {
 type EditableService = ServiceVariant & { isEditing?: boolean };
 type EditableAddon = Addon & { isEditing?: boolean };
 
+
+function ContentManager() {
+    const { firestore: db } = useFirebase();
+    const { toast } = useToast();
+
+    // Services state
+    const servicesRef = useMemoFirebase(() => db ? query(collection(db, 'services'), orderBy('category'), orderBy('name')) : null, [db]);
+    const { data: servicesFromDb, isLoading: isLoadingServices } = useCollection<ServiceVariant>(servicesRef);
+    const [editableServices, setEditableServices] = useState<EditableService[]>([]);
+
+    // Addons state
+    const addonsRef = useMemoFirebase(() => db ? query(collection(db, 'addons'), orderBy('name')) : null, [db]);
+    const { data: addonsFromDb, isLoading: isLoadingAddons } = useCollection<Addon>(addonsRef);
+    const [editableAddons, setEditableAddons] = useState<EditableAddon[]>([]);
+
+    useEffect(() => {
+        if (servicesFromDb) {
+            setEditableServices(servicesFromDb.map(s => ({ ...s, isEditing: false })));
+        }
+    }, [servicesFromDb]);
+
+    useEffect(() => {
+        if (addonsFromDb) {
+            setEditableAddons(addonsFromDb.map(a => ({ ...a, isEditing: false })));
+        }
+    }, [addonsFromDb]);
+
+    const handleServiceChange = (id: string, field: keyof EditableService, value: string | number) => {
+        setEditableServices(prev =>
+            prev.map(s => (s.id === id ? { ...s, [field]: value } : s))
+        );
+    };
+
+    const handleAddonChange = (id: string, field: keyof EditableAddon, value: string | number) => {
+        setEditableAddons(prev =>
+            prev.map(a => (a.id === id ? { ...a, [field]: value } : a))
+        );
+    };
+
+    const toggleServiceEdit = (id: string) => {
+        setEditableServices(prev =>
+            prev.map(s => (s.id === id ? { ...s, isEditing: !s.isEditing } : { ...s, isEditing: false }))
+        );
+    };
+
+    const toggleAddonEdit = (id: string) => {
+        setEditableAddons(prev =>
+            prev.map(a => (a.id === id ? { ...a, isEditing: !a.isEditing } : { ...a, isEditing: false }))
+        );
+    };
+
+    const saveService = async (service: EditableService) => {
+        if (!db) return;
+        const { isEditing, ...serviceData } = service;
+        const serviceRef = doc(db, 'services', service.id);
+
+        try {
+            await setDoc(serviceRef, serviceData, { merge: true });
+            toast({
+                title: 'Success',
+                description: `${service.name} updated successfully.`,
+            });
+            toggleServiceEdit(service.id);
+        } catch (serverError) {
+             const permissionError = new FirestorePermissionError({
+                path: serviceRef.path,
+                operation: 'update',
+                requestResourceData: serviceData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+                variant: 'destructive',
+                title: 'Error updating service',
+                description: 'Could not save changes. Please check permissions.',
+            });
+        }
+    };
+
+    const saveAddon = async (addon: EditableAddon) => {
+        if (!db) return;
+        const { isEditing, ...addonData } = addon;
+        const addonRef = doc(db, 'addons', addon.id);
+
+        try {
+            await setDoc(addonRef, addonData, { merge: true });
+            toast({
+                title: 'Success',
+                description: `${addon.name} updated successfully.`,
+            });
+            toggleAddonEdit(addon.id);
+        } catch (serverError) {
+             const permissionError = new FirestorePermissionError({
+                path: addonRef.path,
+                operation: 'update',
+                requestResourceData: addonData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+                variant: 'destructive',
+                title: 'Error updating add-on',
+                description: 'Could not save changes. Please check permissions.',
+            });
+        }
+    };
+
+
+    const isLoading = isLoadingServices || isLoadingAddons;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Manage Website Content</CardTitle>
+                <CardDescription>Edit services and add-ons. Changes will appear on your website automatically after saving.</CardDescription>
+                 <Button asChild variant="outline" className="w-fit">
+                    <Link href="/admin/migrate-data" target="_blank">
+                        Data Migration Tool <ExternalLink className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    </div>
+                ) : (
+                    <Tabs defaultValue="services">
+                        <TabsList>
+                            <TabsTrigger value="services">Services</TabsTrigger>
+                            <TabsTrigger value="addons">Add-ons</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="services">
+                             <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Service Name</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead>Image URL</TableHead>
+                                            <TableHead>Price</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {editableServices.map(service => (
+                                            <TableRow key={service.id}>
+                                                <TableCell>
+                                                    {service.isEditing ? (
+                                                        <Input value={service.name} onChange={(e) => handleServiceChange(service.id, 'name', e.target.value)} />
+                                                    ) : (
+                                                        service.name
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>{service.category}</TableCell>
+                                                 <TableCell>
+                                                    {service.isEditing ? (
+                                                        <Input value={service.image} onChange={(e) => handleServiceChange(service.id, 'image', e.target.value)} />
+                                                    ) : (
+                                                        <span className="truncate max-w-[150px] inline-block">{service.image}</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {service.isEditing ? (
+                                                        <Input type="number" value={service.price} onChange={(e) => handleServiceChange(service.id, 'price', parseFloat(e.target.value))} />
+                                                    ) : (
+                                                        `$${service.price.toFixed(2)}`
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {service.isEditing ? (
+                                                        <div className="flex gap-2 justify-end">
+                                                            <Button size="sm" onClick={() => saveService(service)}><Save className="w-4 h-4" /></Button>
+                                                            <Button size="sm" variant="ghost" onClick={() => toggleServiceEdit(service.id)}><X className="w-4 h-4" /></Button>
+                                                        </div>
+                                                    ) : (
+                                                        <Button size="sm" variant="outline" onClick={() => toggleServiceEdit(service.id)}><Edit className="w-4 h-4" /></Button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="addons">
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Add-on Name</TableHead>
+                                            <TableHead>Price</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {editableAddons.map(addon => (
+                                            <TableRow key={addon.id}>
+                                                <TableCell>
+                                                    {addon.isEditing ? (
+                                                        <Input value={addon.name} onChange={(e) => handleAddonChange(addon.id, 'name', e.target.value)} />
+                                                    ) : (
+                                                        addon.name
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {addon.isEditing ? (
+                                                        <Input type="number" value={addon.price} onChange={(e) => handleAddonChange(addon.id, 'price', parseFloat(e.target.value))} />
+                                                    ) : (
+                                                        `$${addon.price.toFixed(2)}`
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {addon.isEditing ? (
+                                                         <div className="flex gap-2 justify-end">
+                                                            <Button size="sm" onClick={() => saveAddon(addon)}><Save className="w-4 h-4" /></Button>
+                                                            <Button size="sm" variant="ghost" onClick={() => toggleAddonEdit(addon.id)}><X className="w-4 h-4" /></Button>
+                                                        </div>
+                                                    ) : (
+                                                        <Button size="sm" variant="outline" onClick={() => toggleAddonEdit(addon.id)}><Edit className="w-4 h-4" /></Button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 function BookingsManager() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +278,7 @@ function BookingsManager() {
   const { firestore: db } = useFirebase();
   
   useEffect(() => {
+    if (!db) return;
     const bookingsCol = collection(db, 'bookings');
     const q = query(bookingsCol, orderBy('createdAt', 'desc'));
 
@@ -77,6 +311,7 @@ function BookingsManager() {
 
 
   const handleConfirmBooking = async (booking: Booking) => {
+    if (!db) return;
     const bookingRef = doc(db, 'bookings', booking.id);
     const updatedData = { status: 'confirmed' };
     
@@ -218,7 +453,9 @@ export function AdminDashboard() {
   const { auth } = useFirebase();
 
   const handleLogout = () => {
-    auth.signOut();
+    if (auth) {
+      auth.signOut();
+    }
   };
 
   return (
@@ -233,7 +470,18 @@ export function AdminDashboard() {
       </header>
 
       <main className="container py-8 px-4 md:px-6">
-        <BookingsManager />
+        <Tabs defaultValue="bookings" className="w-full">
+            <TabsList>
+                <TabsTrigger value="bookings">Manage Bookings</TabsTrigger>
+                <TabsTrigger value="content">Manage Content</TabsTrigger>
+            </TabsList>
+            <TabsContent value="bookings">
+                <BookingsManager />
+            </TabsContent>
+            <TabsContent value="content">
+                <ContentManager />
+            </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
