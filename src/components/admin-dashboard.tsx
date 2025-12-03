@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, RefreshCw, LogOut, FileImage } from 'lucide-react';
+import { Loader2, RefreshCw, LogOut, FileImage, Settings } from 'lucide-react';
 import Image from 'next/image';
-import { useFirebase, useUser } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email-flow';
+import Link from 'next/link';
 
 interface Booking {
   id: string;
@@ -52,17 +52,22 @@ export function AdminDashboard() {
         setIsLoading(false);
       },
       (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: bookingsCol.path,
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        // Non-admins might not have permission, but we should not crash the app
+        if (serverError.code === 'permission-denied') {
+            console.warn("Permission denied to fetch bookings. This is expected for non-admin users.");
+             toast({
+              title: 'Permission Denied',
+              description: 'You do not have permission to view bookings.',
+              variant: 'destructive',
+            });
+        } else {
+            const permissionError = new FirestorePermissionError({
+              path: bookingsCol.path,
+              operation: 'list',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
         setIsLoading(false);
-         toast({
-          title: 'Error fetching bookings',
-          description: 'You do not have permission to view bookings. Contact your administrator.',
-          variant: 'destructive',
-        });
       }
     );
 
@@ -118,9 +123,17 @@ export function AdminDashboard() {
        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           <h1 className="text-xl md:text-2xl font-bold font-headline text-primary">Admin Dashboard</h1>
-          <Button variant="outline" size="icon" onClick={handleLogout}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+           <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+                <Link href="/admin/manage-content">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Content
+                </Link>
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
       <main className="container py-8 px-4 md:px-6">
@@ -220,5 +233,3 @@ export function AdminDashboard() {
     </div>
   );
 }
-
-    
