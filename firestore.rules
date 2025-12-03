@@ -1,3 +1,4 @@
+
 /**
  * @description This ruleset enforces a public-read, restricted-write model for bookings,
  *              user-ownership for appointments, and open read access for services and suggested styles.
@@ -11,7 +12,7 @@
  *  - Bookings are publicly readable to facilitate date/time availability checks.
  *  - Booking creation is public for all users.
  *  - Booking updates (confirmations) are restricted to the admin user.
- *  - Service and Addon updates are now public, but only accessible via the admin UI.
+ *  - Service and Addon data is public.
  *  - User listing is disallowed.
  *  - Ambiguous relationships default to owner-only access.
  */
@@ -36,23 +37,21 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read and write service details.
+     * @description Allows anyone to read service details. This is required for the booking page to function.
      * @path /services/{serviceId}
-     * @allow (read, write): Any user can read or write service details.
-     * @principle Allows open access to service details. Editing is handled by the admin UI.
      */
     match /services/{serviceId} {
-      allow read, write: if true;
+      allow read: if true;
+      // Admin-only write is handled on a separate admin page and is not part of this ruleset for now.
     }
 
      /**
-     * @description Allows anyone to read and write add-on details.
+     * @description Allows anyone to read add-on details. This is required for the booking page to function.
      * @path /addons/{addonId}
-     * @allow (read, write): Any user can read or write addon details.
-     * @principle Allows open access to addon details. Editing is handled by the admin UI.
      */
     match /addons/{addonId} {
-      allow read, write: if true;
+      allow read: if true;
+      // Admin-only write is handled on a separate admin page and is not part of this ruleset for now.
     }
 
     /**
@@ -95,3 +94,5 @@ service cloud.firestore {
     return request.auth.uid == userId;
   }
 }
+
+    
