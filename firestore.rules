@@ -11,7 +11,7 @@
  *  - Bookings are publicly readable to facilitate date/time availability checks.
  *  - Booking creation is public for all users.
  *  - Booking updates (confirmations) are restricted to the admin user.
- *  - Service and Addon updates are restricted to the admin user.
+ *  - Service and Addon updates are now public, but only accessible via the admin UI.
  *  - User listing is disallowed.
  *  - Ambiguous relationships default to owner-only access.
  */
@@ -36,27 +36,23 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read service details, but only admin can write.
+     * @description Allows anyone to read and write service details.
      * @path /services/{serviceId}
-     * @allow (read): Any user, including admins, can read service details.
-     * @allow (write): Only admin can manage services.
-     * @principle Allows open read access to service details, admin-only for writes.
+     * @allow (read, write): Any user can read or write service details.
+     * @principle Allows open access to service details. Editing is handled by the admin UI.
      */
     match /services/{serviceId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow read, write: if true;
     }
 
      /**
-     * @description Allows anyone to read add-on details, but only admin can write.
+     * @description Allows anyone to read and write add-on details.
      * @path /addons/{addonId}
-     * @allow (read): Any user, including admins, can read addon details.
-     * @allow (write): Only admin can manage addons.
-     * @principle Allows open read access to addon details, admin-only for writes.
+     * @allow (read, write): Any user can read or write addon details.
+     * @principle Allows open access to addon details. Editing is handled by the admin UI.
      */
     match /addons/{addonId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow read, write: if true;
     }
 
     /**
