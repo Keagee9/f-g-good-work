@@ -94,14 +94,13 @@ function ContentManager() {
         const { isEditing, ...serviceData } = service;
         const serviceRef = doc(db, 'services', service.id);
 
-        try {
-            await setDoc(serviceRef, serviceData, { merge: true });
+        setDoc(serviceRef, serviceData, { merge: true }).then(() => {
             toast({
                 title: 'Success',
                 description: `${service.name} updated successfully.`,
             });
             toggleServiceEdit(service.id);
-        } catch (serverError) {
+        }).catch(serverError => {
              const permissionError = new FirestorePermissionError({
                 path: serviceRef.path,
                 operation: 'update',
@@ -113,7 +112,7 @@ function ContentManager() {
                 title: 'Error updating service',
                 description: 'Could not save changes. Please check permissions.',
             });
-        }
+        });
     };
 
     const saveAddon = async (addon: EditableAddon) => {
@@ -121,14 +120,13 @@ function ContentManager() {
         const { isEditing, ...addonData } = addon;
         const addonRef = doc(db, 'addons', addon.id);
 
-        try {
-            await setDoc(addonRef, addonData, { merge: true });
+        setDoc(addonRef, addonData, { merge: true }).then(() => {
             toast({
                 title: 'Success',
                 description: `${addon.name} updated successfully.`,
             });
             toggleAddonEdit(addon.id);
-        } catch (serverError) {
+        }).catch(serverError => {
              const permissionError = new FirestorePermissionError({
                 path: addonRef.path,
                 operation: 'update',
@@ -140,7 +138,7 @@ function ContentManager() {
                 title: 'Error updating add-on',
                 description: 'Could not save changes. Please check permissions.',
             });
-        }
+        });
     };
 
 
@@ -278,7 +276,10 @@ function BookingsManager() {
   const { firestore: db } = useFirebase();
   
   useEffect(() => {
-    if (!db) return;
+    if (!db) {
+        setIsLoading(false);
+        return;
+    };
     const bookingsCol = collection(db, 'bookings');
     const q = query(bookingsCol, orderBy('createdAt', 'desc'));
 
@@ -350,7 +351,18 @@ function BookingsManager() {
   
   const refreshBookings = () => {
     setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1000);
+    // This is a bit of a hack, but it forces a re-render and the useEffect will re-fetch.
+    // In a more complex app, you might use a state management library to trigger a refetch.
+    const bookingsCol = collection(db, 'bookings');
+    const q = query(bookingsCol, orderBy('createdAt', 'desc'));
+    getDocs(q).then((snapshot) => {
+        const bookingsList = snapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+        })) as Booking[];
+        setBookings(bookingsList);
+        setIsLoading(false);
+    });
   }
 
   return (
@@ -360,7 +372,7 @@ function BookingsManager() {
               <CardTitle>All Bookings</CardTitle>
               <CardDescription>View and manage all appointment requests. New bookings will appear in real-time.</CardDescription>
             </div>
-            <Button variant="outline" size="icon" onClick={refreshBookings}>
+            <Button variant="outline" size="icon" onClick={refreshBookings} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </CardHeader>
