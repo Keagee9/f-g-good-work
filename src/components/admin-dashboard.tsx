@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, doc, updateDoc, query, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -8,12 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, RefreshCw, LogOut, FileImage } from 'lucide-react';
+import { Loader2, RefreshCw, LogOut, FileImage, Settings } from 'lucide-react';
 import Image from 'next/image';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
 import { sendConfirmationEmail } from '@/ai/flows/send-confirmation-email-flow';
+import Link from 'next/link';
 
 interface Booking {
   id: string;
@@ -123,6 +125,11 @@ export function AdminDashboard() {
         <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           <h1 className="text-xl md:text-2xl font-bold font-headline text-primary">Admin Dashboard</h1>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/admin/manage-services">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
             <Button variant="outline" size="icon" onClick={() => {}} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -150,9 +157,9 @@ export function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
-                      <TableHead className="hidden sm:table-cell">Service</TableHead>
-                      <TableHead className="hidden md:table-cell">Date</TableHead>
-                      <TableHead className="hidden lg:table-cell">Created At</TableHead>
+                      <TableHead>Service</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Created At</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -165,9 +172,9 @@ export function AdminDashboard() {
                           <div className="text-sm text-muted-foreground">{booking.customerEmail}</div>
                            <div className="text-sm text-muted-foreground">{booking.customerPhone}</div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell">{booking.serviceName}</TableCell>
-                        <TableCell className="hidden md:table-cell">{booking.date}</TableCell>
-                        <TableCell className="hidden lg:table-cell">
+                        <TableCell>{booking.serviceName}</TableCell>
+                        <TableCell>{booking.date}</TableCell>
+                        <TableCell>
                             {booking.createdAt ? new Date(booking.createdAt.seconds * 1000).toLocaleString() : 'N/A'}
                         </TableCell>
                         <TableCell className="text-center">
