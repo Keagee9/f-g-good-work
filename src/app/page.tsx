@@ -1,8 +1,9 @@
 
+'use client';
+
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { serviceCategories } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -10,8 +11,67 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Phone, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { type ServiceCategory } from '@/lib/types';
+import { collection, query } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+
+function ServicesList() {
+  const { firestore } = useFirebase();
+  const servicesCollection = useMemoFirebase(() => collection(firestore, 'services'), [firestore]);
+  const servicesQuery = useMemoFirebase(() => query(servicesCollection), [servicesCollection]);
+  const { data: serviceCategories, isLoading } = useCollection<ServiceCategory>(servicesQuery);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (!serviceCategories || serviceCategories.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-12">
+        No services available at the moment. Please check back later.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {serviceCategories.map(category => (
+        <Card key={category.id}>
+          <CardHeader>
+            <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
+              <Image
+                src={category.image}
+                alt={category.name}
+                fill
+                style={{ objectFit: 'contain' }}
+                data-ai-hint={category.name}
+              />
+            </div>
+            <CardTitle className="text-primary font-headline">{category.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {category.variants && category.variants.length > 0 ? (
+              <p className="text-muted-foreground text-sm">
+                {category.variants[0].description}
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Details coming soon.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 
 export default function Home() {
   return (
@@ -43,7 +103,7 @@ export default function Home() {
       <main className="flex-1">
         <section className="relative w-full py-20 md:py-32 lg:py-40 bg-background">
           <Image
-            src="https://picsum.photos/1200/800"
+            src="https://picsum.photos/seed/1/1200/800"
             alt="Luxury hair salon"
             fill
             className="object-cover opacity-10"
@@ -85,29 +145,7 @@ export default function Home() {
           <p className="text-muted-foreground text-center mb-8">
             A brief overview of what we offer. Click "Book Now" to see all options.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {serviceCategories.map(category => (
-              <Card key={category.id}>
-                <CardHeader>
-                  <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      data-ai-hint={category.name}
-                    />
-                  </div>
-                  <CardTitle className="text-primary font-headline">{category.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm">
-                    {category.variants[0].description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ServicesList />
         </section>
 
       </main>

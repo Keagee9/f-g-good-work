@@ -1,3 +1,4 @@
+
 /**
  * @description This ruleset enforces a public-read, restricted-write model for bookings,
  *              user-ownership for appointments, and open read access for services and suggested styles.
