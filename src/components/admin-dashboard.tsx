@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, RefreshCw, LogOut, FileImage, Settings } from 'lucide-react';
+import { Loader2, RefreshCw, LogOut, FileImage, Settings, Package } from 'lucide-react';
 import Image from 'next/image';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -60,7 +59,7 @@ export function AdminDashboard() {
       },
       (serverError) => {
         const permissionError = new FirestorePermissionError({
-          path: bookingsCol.path,
+          path: (bookingsCol?.path ?? 'bookings'),
           operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);
@@ -126,8 +125,13 @@ export function AdminDashboard() {
           <h1 className="text-xl md:text-2xl font-bold font-headline text-primary">Admin Dashboard</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" asChild>
-              <Link href="/admin/manage-services">
+              <Link href="/admin/manage-services" aria-label="Manage Services">
                 <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+             <Button variant="outline" size="icon" asChild>
+              <Link href="/admin/manage-addons" aria-label="Manage Add-ons">
+                <Package className="h-4 w-4" />
               </Link>
             </Button>
             <Button variant="outline" size="icon" onClick={() => {}} disabled={isLoading}>
