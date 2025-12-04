@@ -1,4 +1,3 @@
-
 /**
  * @description This ruleset enforces a public-read, restricted-write model for bookings,
  *              user-ownership for appointments, and open read access for services and suggested styles.
@@ -38,18 +37,18 @@ service cloud.firestore {
 
     /**
      * @description Allows anyone to read service details, but only admin can write.
-     * @path /services/{serviceId}
+     * @path /services/{document=**}
      */
-    match /services/{serviceId} {
+    match /services/{document=**} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
      /**
      * @description Allows anyone to read add-on details, but only admin can write.
-     * @path /addons/{addonId}
+     * @path /addons/{document=**}
      */
-    match /addons/{addonId} {
+    match /addons/{document=**} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
