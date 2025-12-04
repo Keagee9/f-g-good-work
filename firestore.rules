@@ -15,12 +15,12 @@ service cloud.firestore {
 
     match /services/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /addons/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /users/{userId}/{document=**} {
