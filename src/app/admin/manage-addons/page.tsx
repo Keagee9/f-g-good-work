@@ -73,7 +73,7 @@ export default function ManageAddonsPage() {
     
     loadData();
 
-  }, [firestore, user, isUserLoading, toast]);
+  }, [firestore, user, isUserLoading]);
   
   if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (

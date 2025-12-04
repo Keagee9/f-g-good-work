@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { serviceCategories as localServiceCategories } from '@/lib/data';
@@ -74,7 +74,7 @@ export default function ManageServicesPage() {
     
     loadData();
 
-  }, [firestore, user, isUserLoading, toast]);
+  }, [firestore, user, isUserLoading]);
   
   if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (
