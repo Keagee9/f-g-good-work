@@ -1,18 +1,18 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { addons as localAddons } from '@/lib/addons';
 import { Addon } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Home, CheckCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ManageAddons } from '@/components/manage-addons';
 
-type FetchStatus = 'loading' | 'migrating' | 'complete' | 'error';
+type FetchStatus = 'loading' | 'complete' | 'error';
 
 export default function ManageAddonsPage() {
   const { firestore, user, isUserLoading } = useFirebase();
@@ -20,73 +20,66 @@ export default function ManageAddonsPage() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!firestore || !user || isUserLoading) return;
-
+  const loadData = useCallback(async () => {
+    if (!firestore) return;
+    setStatus('loading');
     const addonsCollection = collection(firestore, 'addons');
 
-    const loadData = async () => {
-      setStatus('loading');
-      try {
-        const snapshot = await getDocs(addonsCollection);
-        
-        if (snapshot.empty) {
-          setStatus('migrating');
-          toast({
-              title: 'Setting up Add-ons',
-              description: 'Please wait while we populate your database with the initial add-on data.',
-          });
-          try {
-            await Promise.all(localAddons.map(addon => {
-                const docRef = doc(firestore, 'addons', addon.id);
-                return setDoc(docRef, addon);
-            }));
-            
-            const newSnapshot = await getDocs(addonsCollection);
-            const dbAddons = newSnapshot.docs.map(doc => doc.data() as Addon);
-            setAddons(dbAddons);
-            setStatus('complete');
+    try {
+      let snapshot = await getDocs(addonsCollection);
 
-          } catch (e: any) {
-             const permissionError = new FirestorePermissionError({
-                path: 'addons',
-                operation: 'create'
-             });
-             errorEmitter.emit('permission-error', permissionError);
-             setStatus('error');
-             return;
-          }
-        } else {
-            const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
-            setAddons(dbAddons);
-            setStatus('complete');
-        }
-      } catch (error) {
-        const permissionError = new FirestorePermissionError({
-            path: 'addons',
-            operation: 'list'
+      if (snapshot.empty) {
+        toast({
+          title: 'Setting up Add-ons',
+          description: 'Please wait while we populate your database with the initial add-on data.',
         });
-        errorEmitter.emit('permission-error', permissionError);
-        setStatus('error');
-      }
-    };
-    
-    loadData();
 
-  }, [firestore, user, isUserLoading]);
+        try {
+          await Promise.all(localAddons.map(addon => {
+            const docRef = doc(firestore, 'addons', addon.id);
+            return setDoc(docRef, addon);
+          }));
+          
+          snapshot = await getDocs(addonsCollection);
+        } catch (e: any) {
+           const permissionError = new FirestorePermissionError({
+              path: 'addons',
+              operation: 'create'
+           });
+           errorEmitter.emit('permission-error', permissionError);
+           setStatus('error');
+           return;
+        }
+      }
+      
+      const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
+      setAddons(dbAddons);
+      setStatus('complete');
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+          path: 'addons',
+          operation: 'list'
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setStatus('error');
+    }
+  }, [firestore, toast]);
   
-  if (isUserLoading || status === 'loading' || status === 'migrating') {
+  useEffect(() => {
+    if (!isUserLoading && user && firestore) {
+      loadData();
+    }
+  }, [isUserLoading, user, firestore, loadData]);
+
+  if (isUserLoading || status === 'loading') {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
         <h2 className="text-xl font-semibold text-primary">
-            {status === 'migrating' ? 'Migrating add-on data...' : 'Loading your add-ons...'}
+            Loading your add-ons...
         </h2>
         <p className="text-muted-foreground max-w-md">
-          {status === 'migrating' 
-            ? 'This is a one-time setup and may take a moment.' 
-            : 'Fetching your add-on data from the database.'
-          }
+          Fetching your add-on data from the database.
         </p>
       </div>
     );
@@ -114,17 +107,5 @@ export default function ManageAddonsPage() {
     return <ManageAddons initialAddons={addons} />;
   }
 
-  // Fallback case
-  return (
-     <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
-        <CheckCircle className="w-12 h-12 text-green-500" />
-        <h2 className="text-xl font-semibold text-primary">Ready to Manage Add-ons</h2>
-         <Button variant="default" asChild>
-            <Link href="/admin">
-                <Home className="w-4 h-4 mr-2" />
-                Back to Admin
-            </Link>
-        </Button>
-      </div>
-  );
+  return null; // Fallback, should be handled by status states
 }
