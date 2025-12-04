@@ -51,7 +51,7 @@ export default function ManageAddonsPage() {
 
     const unsubscribe = onSnapshot(addonsCollection,
       (snapshot) => {
-        if (snapshot.empty && status !== 'migrating') {
+        if (snapshot.empty && status !== 'migrating' && status !== 'error') {
             migrateData().catch(() => {
                 // Error is handled in migrateData
             });
@@ -72,7 +72,7 @@ export default function ManageAddonsPage() {
     );
 
     return () => unsubscribe();
-  }, [firestore, user, isUserLoading, status]);
+  }, [firestore, user, isUserLoading]);
 
   if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (
@@ -127,3 +127,5 @@ export default function ManageAddonsPage() {
       </div>
   );
 }
+
+  

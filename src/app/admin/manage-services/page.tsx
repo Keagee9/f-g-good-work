@@ -39,6 +39,7 @@ export default function ManageServicesPage() {
                 batch.set(docRef, { ...category, id: docId });
             });
             await batch.commit();
+            // No need to setStatus('complete') here, the onSnapshot will handle it
         } catch (e: any) {
             const permissionError = new FirestorePermissionError({
                 path: 'services',
@@ -53,7 +54,7 @@ export default function ManageServicesPage() {
 
     const unsubscribe = onSnapshot(servicesCollection,
       (snapshot) => {
-        if (snapshot.empty && status !== 'migrating') {
+        if (snapshot.empty && status !== 'migrating' && status !== 'error') {
             migrateData().catch(() => {
                 // Error is already handled in migrateData
             });
@@ -74,7 +75,7 @@ export default function ManageServicesPage() {
     );
 
     return () => unsubscribe();
-  }, [firestore, user, isUserLoading, status]); // added status to dependency array
+  }, [firestore, user, isUserLoading]); // Removed status and toast from dependencies
 
   if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (
@@ -129,3 +130,5 @@ export default function ManageServicesPage() {
       </div>
   );
 }
+
+    
