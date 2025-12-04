@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, writeBatch, doc } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { serviceCategories as localServiceCategories } from '@/lib/data';
 import { ServiceCategory } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -31,49 +31,51 @@ export default function ManageServicesPage() {
             title: 'Setting up Services',
             description: 'Please wait while we populate your database with the initial service data.',
         });
-        const batch = writeBatch(firestore);
-        localServiceCategories.forEach(category => {
-            const docRef = doc(firestore, 'services', category.id);
-            batch.set(docRef, category);
-        });
-        await batch.commit();
+        try {
+            const batch = writeBatch(firestore);
+            localServiceCategories.forEach(category => {
+                const docId = category.id.replace(/\//g, '-');
+                const docRef = doc(firestore, 'services', docId);
+                batch.set(docRef, { ...category, id: docId });
+            });
+            await batch.commit();
+        } catch (e: any) {
+            const permissionError = new FirestorePermissionError({
+                path: 'services',
+                operation: 'write'
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            setStatus('error');
+            // Re-throw to stop execution
+            throw permissionError;
+        }
     };
 
-    const unsubscribe = onSnapshot(servicesCollection, 
-      async (snapshot) => {
-        if (snapshot.empty) {
-            try {
-                await migrateData();
-                // The onSnapshot will re-trigger with the new data after migration
-            } catch (e: any) {
-                 console.error('Error migrating services:', e);
-                 toast({
-                    variant: 'destructive',
-                    title: 'Migration Failed',
-                    description: 'Could not write initial service data. Check Firestore permissions.',
-                });
-                setStatus('error');
-            }
-        } else {
+    const unsubscribe = onSnapshot(servicesCollection,
+      (snapshot) => {
+        if (snapshot.empty && status !== 'migrating') {
+            migrateData().catch(() => {
+                // Error is already handled in migrateData
+            });
+        } else if (!snapshot.empty) {
             const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
             setServices(dbServices);
             setStatus('complete');
         }
       },
       (error) => {
-        console.error('Error fetching services:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Database Error',
-          description: 'Could not read services. Check Firestore permissions.',
+        const permissionError = new FirestorePermissionError({
+            path: 'services',
+            operation: 'list'
         });
+        errorEmitter.emit('permission-error', permissionError);
         setStatus('error');
       }
     );
-    
+
     return () => unsubscribe();
-  }, [firestore, user, isUserLoading, toast]);
-  
+  }, [firestore, user, isUserLoading, status]); // added status to dependency array
+
   if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
@@ -82,8 +84,8 @@ export default function ManageServicesPage() {
             {status === 'migrating' ? 'Migrating service data...' : 'Loading your services...'}
         </h2>
         <p className="text-muted-foreground max-w-md">
-          {status === 'migrating' 
-            ? 'This is a one-time setup and may take a moment.' 
+          {status === 'migrating'
+            ? 'This is a one-time setup and may take a moment.'
             : 'Fetching your service data from the database.'
           }
         </p>

@@ -4,8 +4,8 @@
  *              user-ownership for appointments, and open read access for services and suggested styles.
  * @dataStructure
  *  - /bookings/{bookingId}: Stores booking requests with public read access.
- *  - /services/{serviceId}: Stores service details with admin-only read/write.
- *  - /addons/{addonId}: Stores addon details with open read.
+ *  - /services/{serviceId}: Stores service details with open read, admin-only write.
+ *  - /addons/{addonId}: Stores addon details with open read, admin-only write.
  *  - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointments with owner-only access.
  *  - /suggestedStyles/{suggestedStyleId}: Stores suggested styles with open read.
  * @keySecurityDecisions
@@ -37,7 +37,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows admin to read and write all services. Public users can only read.
+     * @description Allows anyone to read service details, but only admin can write.
      * @path /services/{serviceId}
      */
     match /services/{serviceId} {
@@ -46,7 +46,7 @@ service cloud.firestore {
     }
 
      /**
-     * @description Allows anyone to read add-on details. This is required for the booking page to function.
+     * @description Allows anyone to read add-on details, but only admin can write.
      * @path /addons/{addonId}
      */
     match /addons/{addonId} {

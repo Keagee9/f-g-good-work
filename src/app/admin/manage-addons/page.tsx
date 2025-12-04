@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, getDocs, writeBatch, doc } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, writeBatch, doc } from 'firebase/firestore';
+import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { addons as localAddons } from '@/lib/addons';
 import { Addon } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -31,49 +31,49 @@ export default function ManageAddonsPage() {
             title: 'Setting up Add-ons',
             description: 'Please wait while we populate your database with the initial add-on data.',
         });
-        const batch = writeBatch(firestore);
-        localAddons.forEach(addon => {
-            const docRef = doc(firestore, 'addons', addon.id);
-            batch.set(docRef, addon);
-        });
-        await batch.commit();
+        try {
+            const batch = writeBatch(firestore);
+            localAddons.forEach(addon => {
+                const docRef = doc(firestore, 'addons', addon.id);
+                batch.set(docRef, addon);
+            });
+            await batch.commit();
+        } catch (e: any) {
+             const permissionError = new FirestorePermissionError({
+                path: 'addons',
+                operation: 'write'
+             });
+             errorEmitter.emit('permission-error', permissionError);
+            setStatus('error');
+            throw permissionError;
+        }
     };
 
-    const unsubscribe = onSnapshot(addonsCollection, 
-      async (snapshot) => {
-        if (snapshot.empty) {
-            try {
-                await migrateData();
-                // The onSnapshot will re-trigger with the new data after migration
-            } catch (e: any) {
-                 console.error('Error migrating add-ons:', e);
-                 toast({
-                    variant: 'destructive',
-                    title: 'Migration Failed',
-                    description: 'Could not write initial add-on data. Check Firestore permissions.',
-                });
-                setStatus('error');
-            }
-        } else {
+    const unsubscribe = onSnapshot(addonsCollection,
+      (snapshot) => {
+        if (snapshot.empty && status !== 'migrating') {
+            migrateData().catch(() => {
+                // Error is handled in migrateData
+            });
+        } else if (!snapshot.empty) {
             const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
             setAddons(dbAddons);
             setStatus('complete');
         }
       },
       (error) => {
-        console.error('Error fetching add-ons:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Database Error',
-          description: 'Could not read add-ons. Check Firestore permissions.',
+        const permissionError = new FirestorePermissionError({
+            path: 'addons',
+            operation: 'list'
         });
+        errorEmitter.emit('permission-error', permissionError);
         setStatus('error');
       }
     );
-    
+
     return () => unsubscribe();
-  }, [firestore, user, isUserLoading, toast]);
-  
+  }, [firestore, user, isUserLoading, status]);
+
   if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
@@ -82,8 +82,8 @@ export default function ManageAddonsPage() {
             {status === 'migrating' ? 'Migrating add-on data...' : 'Loading your add-ons...'}
         </h2>
         <p className="text-muted-foreground max-w-md">
-          {status === 'migrating' 
-            ? 'This is a one-time setup and may take a moment.' 
+          {status === 'migrating'
+            ? 'This is a one-time setup and may take a moment.'
             : 'Fetching your add-on data from the database.'
           }
         </p>
