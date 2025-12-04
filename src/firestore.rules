@@ -41,8 +41,7 @@ service cloud.firestore {
      * @path /services/{serviceId}
      */
     match /services/{serviceId} {
-      allow get: if true;
-      allow list: if true;
+      allow read: if true;
       allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
@@ -51,8 +50,7 @@ service cloud.firestore {
      * @path /addons/{addonId}
      */
     match /addons/{addonId} {
-      allow get: if true;
-      allow list: if true;
+      allow read: if true;
       allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
