@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
+import { serviceCategories as localServiceCategories } from '@/lib/data';
 import { ServiceCategory } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Home, CheckCircle } from 'lucide-react';
@@ -11,7 +12,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ManageServices } from '@/components/manage-services';
 
-type FetchStatus = 'loading' | 'complete' | 'error';
+type FetchStatus = 'loading' | 'migrating' | 'complete' | 'error';
 
 export default function ManageServicesPage() {
   const { firestore, user, isUserLoading } = useFirebase();
@@ -22,21 +23,42 @@ export default function ManageServicesPage() {
   useEffect(() => {
     if (!firestore || !user || isUserLoading) return;
 
-    setStatus('loading');
     const servicesCollection = collection(firestore, 'services');
-    
+
+    const migrateData = async () => {
+        setStatus('migrating');
+        toast({
+            title: 'Setting up Services',
+            description: 'Please wait while we populate your database with the initial service data.',
+        });
+        const batch = writeBatch(firestore);
+        localServiceCategories.forEach(category => {
+            const docRef = doc(firestore, 'services', category.id);
+            batch.set(docRef, category);
+        });
+        await batch.commit();
+    };
+
     const unsubscribe = onSnapshot(servicesCollection, 
-      (snapshot) => {
+      async (snapshot) => {
         if (snapshot.empty) {
-            toast({
-                title: 'No Services Found',
-                description: 'Your services collection is empty. You can manage them here once they are added.',
-                variant: 'default',
-            });
+            try {
+                await migrateData();
+                // The onSnapshot will re-trigger with the new data after migration
+            } catch (e: any) {
+                 console.error('Error migrating services:', e);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Migration Failed',
+                    description: 'Could not write initial service data. Check Firestore permissions.',
+                });
+                setStatus('error');
+            }
+        } else {
+            const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
+            setServices(dbServices);
+            setStatus('complete');
         }
-        const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
-        setServices(dbServices);
-        setStatus('complete');
       },
       (error) => {
         console.error('Error fetching services:', error);
@@ -52,13 +74,18 @@ export default function ManageServicesPage() {
     return () => unsubscribe();
   }, [firestore, user, isUserLoading, toast]);
   
-  if (isUserLoading || status === 'loading') {
+  if (isUserLoading || status === 'loading' || status === 'migrating') {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <h2 className="text-xl font-semibold text-primary">Loading your services...</h2>
+        <h2 className="text-xl font-semibold text-primary">
+            {status === 'migrating' ? 'Migrating service data...' : 'Loading your services...'}
+        </h2>
         <p className="text-muted-foreground max-w-md">
-          Fetching your service data from the database.
+          {status === 'migrating' 
+            ? 'This is a one-time setup and may take a moment.' 
+            : 'Fetching your service data from the database.'
+          }
         </p>
       </div>
     );
