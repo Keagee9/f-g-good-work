@@ -4,7 +4,7 @@
  *              user-ownership for appointments, and open read access for services and suggested styles.
  * @dataStructure
  *  - /bookings/{bookingId}: Stores booking requests with public read access.
- *  - /services/{serviceId}: Stores service details with open read.
+ *  - /services/{serviceId}: Stores service details with admin-only read/write.
  *  - /addons/{addonId}: Stores addon details with open read.
  *  - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointments with owner-only access.
  *  - /suggestedStyles/{suggestedStyleId}: Stores suggested styles with open read.
@@ -12,7 +12,7 @@
  *  - Bookings are publicly readable to facilitate date/time availability checks.
  *  - Booking creation is public for all users.
  *  - Booking updates (confirmations) are restricted to the admin user.
- *  - Service and Addon data is public.
+ *  - Service and Addon data is public to read, but only writable by admin.
  *  - User listing is disallowed.
  *  - Ambiguous relationships default to owner-only access.
  */
@@ -37,12 +37,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read service details. This is required for the booking page to function.
+     * @description Allows admin to read and write all services. Public users can only read.
      * @path /services/{serviceId}
      */
     match /services/{serviceId} {
       allow read: if true;
-      // Admin-only write is handled on a separate admin page and is not part of this ruleset for now.
+      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
      /**
@@ -51,7 +51,7 @@ service cloud.firestore {
      */
     match /addons/{addonId} {
       allow read: if true;
-      // Admin-only write is handled on a separate admin page and is not part of this ruleset for now.
+      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
     /**
@@ -94,5 +94,3 @@ service cloud.firestore {
     return request.auth.uid == userId;
   }
 }
-
-    
