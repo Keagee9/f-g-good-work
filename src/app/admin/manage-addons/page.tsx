@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { addons as localAddons } from '@/lib/addons';
 import { Addon } from '@/lib/types';
@@ -19,39 +20,20 @@ export default function ManageAddonsPage() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const { toast } = useToast();
 
-  const loadData = useCallback(async () => {
-    if (!firestore || !user) {
-        setStatus('error');
-        return;
-    }
-
-    setStatus('loading');
-    const addonsCollection = collection(firestore, 'addons');
-
+  const migrateData = useCallback(async () => {
+    if (!firestore) return;
+    toast({
+      title: 'Setting up Add-ons',
+      description: 'Please wait while we populate your database with the initial add-on data.',
+    });
     try {
-        let snapshot = await getDocs(addonsCollection);
-
-        if (snapshot.empty) {
-            toast({
-              title: 'Setting up Add-ons',
-              description: 'Please wait while we populate your database with the initial add-on data.',
-            });
-
-            // Migrate data using individual setDoc calls
-            const migrationPromises = localAddons.map(addon => {
-              const docRef = doc(firestore, 'addons', addon.id);
-              return setDoc(docRef, addon);
-            });
-            await Promise.all(migrationPromises);
-            
-            // Fetch data again after migration
-            snapshot = await getDocs(addonsCollection);
-        }
-
-        const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
-        setAddons(dbAddons);
-        setStatus('complete');
-
+      const batch = writeBatch(firestore);
+      localAddons.forEach(addon => {
+        const docRef = doc(firestore, 'addons', addon.id);
+        batch.set(docRef, addon);
+      });
+      await batch.commit();
+      // Data will be set by the onSnapshot listener
     } catch (e: any) {
        const permissionError = new FirestorePermissionError({
           path: 'addons',
@@ -60,14 +42,36 @@ export default function ManageAddonsPage() {
        errorEmitter.emit('permission-error', permissionError);
        setStatus('error');
     }
-  }, [firestore, user, toast]);
-
+  }, [firestore, toast]);
+  
   useEffect(() => {
-    if (!isUserLoading) {
-      loadData();
+    if (!firestore || !user) {
+      if (!isUserLoading) setStatus('error');
+      return;
     }
-  }, [isUserLoading, loadData]);
 
+    setStatus('loading');
+    const addonsCollection = collection(firestore, 'addons');
+    
+    const unsubscribe = onSnapshot(addonsCollection, (snapshot) => {
+      if (snapshot.empty) {
+        migrateData();
+      } else {
+        const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
+        setAddons(dbAddons);
+        setStatus('complete');
+      }
+    }, (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: 'addons',
+        operation: 'list'
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setStatus('error');
+    });
+
+    return () => unsubscribe();
+  }, [firestore, user, isUserLoading, migrateData]);
 
   if (isUserLoading || status === 'loading') {
     return (
@@ -105,5 +109,5 @@ export default function ManageAddonsPage() {
     return <ManageAddons initialAddons={addons} />;
   }
 
-  return null;
+  return null; // Fallback, should be handled by status states
 }
