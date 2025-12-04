@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, onSnapshot, writeBatch, doc } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { serviceCategories as localServiceCategories } from '@/lib/data';
 import { ServiceCategory } from '@/lib/types';
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { ManageServices } from '@/components/manage-services';
 
-type FetchStatus = 'loading' | 'migrating' | 'complete' | 'error';
+type FetchStatus = 'loading' | 'complete' | 'error';
 
 export default function ManageServicesPage() {
   const { firestore, user, isUserLoading } = useFirebase();
@@ -20,76 +20,64 @@ export default function ManageServicesPage() {
   const [services, setServices] = useState<ServiceCategory[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!firestore || !user || isUserLoading) return;
-
+  const loadServices = useCallback(async () => {
+    if (!firestore) return;
+    setStatus('loading');
+    
     const servicesCollection = collection(firestore, 'services');
 
-    const migrateData = async () => {
-        setStatus('migrating');
+    try {
+      let snapshot = await getDocs(servicesCollection);
+
+      if (snapshot.empty) {
         toast({
             title: 'Setting up Services',
-            description: 'Please wait while we populate your database with the initial service data.',
+            description: 'One-time data migration in progress. Please wait...',
         });
+        
+        const batch = writeBatch(firestore);
+        localServiceCategories.forEach(category => {
+            const docId = category.id.replace(/\//g, '-');
+            const docRef = doc(firestore, 'services', docId);
+            batch.set(docRef, { ...category, id: docId });
+        });
+        
         try {
-            const batch = writeBatch(firestore);
-            localServiceCategories.forEach(category => {
-                const docId = category.id.replace(/\//g, '-');
-                const docRef = doc(firestore, 'services', docId);
-                batch.set(docRef, { ...category, id: docId });
-            });
             await batch.commit();
-            // No need to setStatus('complete') here, the onSnapshot will handle it
-        } catch (e: any) {
-            const permissionError = new FirestorePermissionError({
-                path: 'services',
-                operation: 'write'
-            });
+            // After migration, refetch the data
+            snapshot = await getDocs(servicesCollection);
+        } catch (e) {
+            const permissionError = new FirestorePermissionError({ path: 'services', operation: 'write' });
             errorEmitter.emit('permission-error', permissionError);
             setStatus('error');
-            // Re-throw to stop execution
-            throw permissionError;
+            return;
         }
-    };
+      }
+      
+      const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
+      setServices(dbServices);
+      setStatus('complete');
 
-    const unsubscribe = onSnapshot(servicesCollection,
-      (snapshot) => {
-        if (snapshot.empty && status !== 'migrating' && status !== 'error') {
-            migrateData().catch(() => {
-                // Error is already handled in migrateData
-            });
-        } else if (!snapshot.empty) {
-            const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
-            setServices(dbServices);
-            setStatus('complete');
-        }
-      },
-      (error) => {
-        const permissionError = new FirestorePermissionError({
-            path: 'services',
-            operation: 'list'
-        });
+    } catch (error) {
+        console.error("Error loading services:", error);
+        const permissionError = new FirestorePermissionError({ path: 'services', operation: 'list' });
         errorEmitter.emit('permission-error', permissionError);
         setStatus('error');
-      }
-    );
+    }
+  }, [firestore, toast]);
 
-    return () => unsubscribe();
-  }, [firestore, user, isUserLoading]); // Removed status and toast from dependencies
+  useEffect(() => {
+    if (!isUserLoading && user) {
+        loadServices();
+    }
+  }, [isUserLoading, user, loadServices]);
 
-  if (isUserLoading || status === 'loading' || status === 'migrating') {
+  if (isUserLoading || status === 'loading') {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <h2 className="text-xl font-semibold text-primary">
-            {status === 'migrating' ? 'Migrating service data...' : 'Loading your services...'}
-        </h2>
-        <p className="text-muted-foreground max-w-md">
-          {status === 'migrating'
-            ? 'This is a one-time setup and may take a moment.'
-            : 'Fetching your service data from the database.'
-          }
-        </p>
+        <h2 className="text-xl font-semibold text-primary">Loading your services...</h2>
+        <p className="text-muted-foreground max-w-md">Fetching your service data from the database. One-time migration may occur.</p>
       </div>
     );
   }
@@ -111,12 +99,12 @@ export default function ManageServicesPage() {
       </div>
     );
   }
-
+  
   if (status === 'complete') {
     return <ManageServices initialServices={services} />;
   }
 
-  // Fallback case, should not be reached
+  // Fallback case
   return (
      <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <CheckCircle className="w-12 h-12 text-green-500" />
@@ -130,5 +118,3 @@ export default function ManageServicesPage() {
       </div>
   );
 }
-
-    

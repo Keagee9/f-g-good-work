@@ -1,97 +1,35 @@
-/**
- * @description This ruleset enforces a public-read, restricted-write model for bookings,
- *              user-ownership for appointments, and open read access for services and suggested styles.
- * @dataStructure
- *  - /bookings/{bookingId}: Stores booking requests with public read access.
- *  - /services/{serviceId}: Stores service details with open read, admin-only write.
- *  - /addons/{addonId}: Stores addon details with open read, admin-only write.
- *  - /users/{userId}/appointments/{appointmentId}: Stores user-specific appointments with owner-only access.
- *  - /suggestedStyles/{suggestedStyleId}: Stores suggested styles with open read.
- * @keySecurityDecisions
- *  - Bookings are publicly readable to facilitate date/time availability checks.
- *  - Booking creation is public for all users.
- *  - Booking updates (confirmations) are restricted to the admin user.
- *  - Service and Addon data is public to read, but only writable by admin.
- *  - User listing is disallowed.
- *  - Ambiguous relationships default to owner-only access.
- */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Allows anyone to read and create bookings, but only the admin can update them.
-     * @path /bookings/{bookingId}
-     * @allow (get, list, create): Any user can read or create a booking.
-     * @allow (update): Only the admin can update a booking (e.g., to confirm it).
-     * @deny (delete): No user can delete a booking.
-     * @principle Allows public creation/read for booking flow, but secures management actions.
-     */
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+    }
+
     match /bookings/{bookingId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if true;
-      allow update: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow read, create: if true;
+      allow update: if isAdmin();
       allow delete: if false;
     }
 
-    /**
-     * @description Allows anyone to read service details, but only admin can write.
-     * @path /services/{document=**}
-     */
     match /services/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow write: if isAdmin();
     }
 
-     /**
-     * @description Allows anyone to read add-on details, but only admin can write.
-     * @path /addons/{document=**}
-     */
     match /addons/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
+      allow write: if isAdmin();
     }
 
-    /**
-     * @description Enforces user-ownership for appointments.
-     * @path /users/{userId}/appointments/{appointmentId}
-     * @allow (get, list): Only the owner can read their appointments.
-     * @allow (create): Only the owner can create appointments under their user ID.
-     * @allow (update, delete): Only the owner can update or delete their appointments, if they exist.
-     * @principle Enforces user-ownership for appointment data.
-     */
-    match /users/{userId}/appointments/{appointmentId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth.uid == userId;
     }
 
-    /**
-     * @description Allows anyone to read suggested braid styles.
-     * @path /suggestedStyles/{suggestedStyleId}
-     * @allow (get, list): Any user can read suggested styles.
-     * @deny (create, update, delete): No user can create, update, or delete a suggested style.
-     * @principle Allows open read access to suggested styles.
-     */
-    match /suggestedStyles/{suggestedStyleId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /suggestedStyles/{styleId} {
+        allow read: if true;
+        allow write: if false;
     }
-  }
-
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return request.auth.uid == userId;
   }
 }
-
-    
