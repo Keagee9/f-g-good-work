@@ -2,96 +2,69 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
-import { serviceCategories as localServiceCategories } from '@/lib/data';
-import { ServiceCategory, ServiceVariant } from '@/lib/types';
+import { ServiceCategory } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Home, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ManageServices } from '@/components/manage-services';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { ManageServices } from '@/components/manage-services';
 
-type MigrationStatus = 'idle' | 'checking' | 'migrating' | 'complete' | 'error';
+type FetchStatus = 'loading' | 'complete' | 'error';
 
 export default function ManageServicesPage() {
   const { firestore, user, isUserLoading } = useFirebase();
-  const [migrationStatus, setMigrationStatus] = useState<MigrationStatus>('idle');
+  const [status, setStatus] = useState<FetchStatus>('loading');
   const [services, setServices] = useState<ServiceCategory[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAndMigrateData = async () => {
-      if (!firestore || !user) return;
+    if (!firestore || !user || isUserLoading) return;
 
-      setMigrationStatus('checking');
-      const servicesCollection = collection(firestore, 'services');
-
-      try {
-        const snapshot = await getDocs(servicesCollection);
+    setStatus('loading');
+    const servicesCollection = collection(firestore, 'services');
+    
+    const unsubscribe = onSnapshot(servicesCollection, 
+      (snapshot) => {
         if (snapshot.empty) {
-          setMigrationStatus('migrating');
-          toast({
-            title: 'First-time Setup',
-            description: 'Migrating your local services to the database. This will only happen once.',
-          });
-
-          const batch = writeBatch(firestore);
-          localServiceCategories.forEach(category => {
-            const docRef = doc(servicesCollection, category.id);
-            // Ensure variants are stored as an array of objects
-            const categoryToStore = {
-                ...category,
-                variants: category.variants.map(v => ({...v}))
-            };
-            batch.set(docRef, categoryToStore);
-          });
-
-          await batch.commit();
-          
-          toast({
-            title: 'Migration Complete!',
-            description: 'Your services are now managed in the database.',
-          });
-          setServices(localServiceCategories);
-          setMigrationStatus('complete');
-        } else {
-          const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
-          setServices(dbServices);
-          setMigrationStatus('complete');
+            toast({
+                title: 'No Services Found',
+                description: 'Your services collection is empty. You can manage them here once they are added.',
+                variant: 'default',
+            });
         }
-      } catch (error) {
-        console.error('Error during service data migration/check:', error);
+        const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
+        setServices(dbServices);
+        setStatus('complete');
+      },
+      (error) => {
+        console.error('Error fetching services:', error);
         toast({
           variant: 'destructive',
           title: 'Database Error',
-          description: 'Could not read or write services. Check permissions.',
+          description: 'Could not read services. Check Firestore permissions.',
         });
-        setMigrationStatus('error');
+        setStatus('error');
       }
-    };
-
-    if (!isUserLoading) {
-      checkAndMigrateData();
-    }
+    );
+    
+    return () => unsubscribe();
   }, [firestore, user, isUserLoading, toast]);
   
-  if (isUserLoading || migrationStatus === 'checking' || migrationStatus === 'migrating') {
+  if (isUserLoading || status === 'loading') {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <h2 className="text-xl font-semibold text-primary">Setting up your services...</h2>
+        <h2 className="text-xl font-semibold text-primary">Loading your services...</h2>
         <p className="text-muted-foreground max-w-md">
-          {migrationStatus === 'checking' 
-            ? 'Checking your service database...' 
-            : 'One moment, we are migrating your services to the database for the first time. This will allow you to edit them from this page.'}
+          Fetching your service data from the database.
         </p>
       </div>
     );
   }
 
-  if (migrationStatus === 'error') {
+  if (status === 'error') {
      return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <AlertTriangle className="w-12 h-12 text-destructive" />
@@ -109,18 +82,15 @@ export default function ManageServicesPage() {
     );
   }
 
-
-  if (migrationStatus === 'complete' && services.length > 0) {
+  if (status === 'complete') {
     return <ManageServices initialServices={services} />;
   }
 
+  // Fallback case, should not be reached
   return (
      <div className="flex flex-col justify-center items-center min-h-screen bg-background text-center gap-4 p-4">
         <CheckCircle className="w-12 h-12 text-green-500" />
-        <h2 className="text-xl font-semibold text-primary">No Services Found</h2>
-        <p className="text-muted-foreground max-w-md">
-            Your database is ready, but no services were found. You can add them here.
-        </p>
+        <h2 className="text-xl font-semibold text-primary">Ready to Manage Services</h2>
          <Button variant="default" asChild>
             <Link href="/admin">
                 <Home className="w-4 h-4 mr-2" />
