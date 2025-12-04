@@ -14,12 +14,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /services/{document=**} {
+    match /services/{serviceId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    match /addons/{document=**} {
+    match /addons/{addonId} {
       allow read: if true;
       allow write: if isAdmin();
     }

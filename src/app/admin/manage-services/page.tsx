@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { serviceCategories as localServiceCategories } from '@/lib/data';
 import { ServiceCategory } from '@/lib/types';
@@ -20,60 +19,56 @@ export default function ManageServicesPage() {
   const [services, setServices] = useState<ServiceCategory[]>([]);
   const { toast } = useToast();
 
-  const migrateData = useCallback(async () => {
-    if (!firestore) return;
-    toast({
-      title: 'Setting up Services',
-      description: 'Please wait while we populate the database with initial service data.',
-    });
-    try {
-      const batch = writeBatch(firestore);
-      localServiceCategories.forEach(category => {
-        const docId = category.id.replace(/\//g, '-');
-        const docRef = doc(firestore, 'services', docId);
-        batch.set(docRef, { ...category, id: docId });
-      });
-      await batch.commit();
-      // The onSnapshot listener will pick up the new data automatically.
-    } catch (e: any) {
-      const permissionError = new FirestorePermissionError({
-        path: 'services',
-        operation: 'write'
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      setStatus('error');
-    }
-  }, [firestore, toast]);
-
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!firestore || !user) {
-      if (!isUserLoading) setStatus('error');
-      return;
+        setStatus('error');
+        return;
     }
-
+    
     setStatus('loading');
     const servicesCollection = collection(firestore, 'services');
-    
-    const unsubscribe = onSnapshot(servicesCollection, (snapshot) => {
-      if (snapshot.empty) {
-        // Only migrate if the collection is empty.
-        migrateData();
-      } else {
+
+    try {
+        let snapshot = await getDocs(servicesCollection);
+        
+        if (snapshot.empty) {
+            toast({
+              title: 'Setting up Services',
+              description: 'Please wait while we populate your database with the initial service data.',
+            });
+            
+            // Migrate data using individual setDoc calls
+            const migrationPromises = localServiceCategories.map(category => {
+              const docId = category.id.replace(/\//g, '-');
+              const docRef = doc(firestore, 'services', docId);
+              return setDoc(docRef, { ...category, id: docId });
+            });
+            await Promise.all(migrationPromises);
+
+            // Fetch the data again after migration
+            snapshot = await getDocs(servicesCollection);
+        }
+
         const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
         setServices(dbServices);
         setStatus('complete');
-      }
-    }, (error) => {
-      const permissionError = new FirestorePermissionError({
-        path: 'services',
-        operation: 'list'
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      setStatus('error');
-    });
 
-    return () => unsubscribe();
-  }, [firestore, user, isUserLoading, migrateData]);
+    } catch (e: any) {
+       const permissionError = new FirestorePermissionError({
+          path: 'services',
+          operation: 'write'
+       });
+       errorEmitter.emit('permission-error', permissionError);
+       setStatus('error');
+    }
+  }, [firestore, user, toast]);
+  
+  useEffect(() => {
+    if (!isUserLoading) {
+      loadData();
+    }
+  }, [isUserLoading, loadData]);
+
   
   if (isUserLoading || status === 'loading') {
     return (
@@ -111,5 +106,5 @@ export default function ManageServicesPage() {
     return <ManageServices initialServices={services} />;
   }
 
-  return null;
+  return null; // Fallback for loading state
 }
