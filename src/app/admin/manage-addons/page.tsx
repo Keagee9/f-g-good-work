@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { addons as localAddons } from '@/lib/addons';
 import { Addon } from '@/lib/types';
@@ -20,56 +20,57 @@ export default function ManageAddonsPage() {
   const [addons, setAddons] = useState<Addon[]>([]);
   const { toast } = useToast();
 
-  const loadData = useCallback(async () => {
+  const migrateData = useCallback(async () => {
     if (!firestore) return;
-    setStatus('loading');
-    const addonsCollection = collection(firestore, 'addons');
-
+    toast({
+      title: 'Setting up Add-ons',
+      description: 'Please wait while we populate your database with the initial add-on data.',
+    });
     try {
-      let snapshot = await getDocs(addonsCollection);
-
-      if (snapshot.empty) {
-        toast({
-          title: 'Setting up Add-ons',
-          description: 'Please wait while we populate your database with the initial add-on data.',
-        });
-
-        try {
-          await Promise.all(localAddons.map(addon => {
-            const docRef = doc(firestore, 'addons', addon.id);
-            return setDoc(docRef, addon);
-          }));
-          
-          snapshot = await getDocs(addonsCollection);
-        } catch (e: any) {
-           const permissionError = new FirestorePermissionError({
-              path: 'addons',
-              operation: 'create'
-           });
-           errorEmitter.emit('permission-error', permissionError);
-           setStatus('error');
-           return;
-        }
-      }
-      
-      const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
-      setAddons(dbAddons);
-      setStatus('complete');
-    } catch (error) {
-      const permissionError = new FirestorePermissionError({
-          path: 'addons',
-          operation: 'list'
+      const batch = writeBatch(firestore);
+      localAddons.forEach(addon => {
+        const docRef = doc(firestore, 'addons', addon.id);
+        batch.set(docRef, addon);
       });
-      errorEmitter.emit('permission-error', permissionError);
-      setStatus('error');
+      await batch.commit();
+    } catch (e: any) {
+       const permissionError = new FirestorePermissionError({
+          path: 'addons',
+          operation: 'write'
+       });
+       errorEmitter.emit('permission-error', permissionError);
+       setStatus('error');
     }
   }, [firestore, toast]);
   
   useEffect(() => {
-    if (!isUserLoading && user && firestore) {
-      loadData();
+    if (!firestore || !user) {
+      if (!isUserLoading) setStatus('error');
+      return;
     }
-  }, [isUserLoading, user, firestore, loadData]);
+
+    setStatus('loading');
+    const addonsCollection = collection(firestore, 'addons');
+    
+    const unsubscribe = onSnapshot(addonsCollection, (snapshot) => {
+      if (snapshot.empty) {
+        migrateData();
+      } else {
+        const dbAddons = snapshot.docs.map(doc => doc.data() as Addon);
+        setAddons(dbAddons);
+        setStatus('complete');
+      }
+    }, (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: 'addons',
+        operation: 'list'
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setStatus('error');
+    });
+
+    return () => unsubscribe();
+  }, [firestore, user, isUserLoading, migrateData]);
 
   if (isUserLoading || status === 'loading') {
     return (
@@ -79,7 +80,7 @@ export default function ManageAddonsPage() {
             Loading your add-ons...
         </h2>
         <p className="text-muted-foreground max-w-md">
-          Fetching your add-on data from the database.
+          Fetching your add-on data from the database. This may include a one-time setup.
         </p>
       </div>
     );
@@ -107,5 +108,5 @@ export default function ManageAddonsPage() {
     return <ManageAddons initialAddons={addons} />;
   }
 
-  return null; // Fallback, should be handled by status states
+  return null;
 }

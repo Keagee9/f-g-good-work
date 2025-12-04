@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, writeBatch } from 'firebase/firestore';
 import { useFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { serviceCategories as localServiceCategories } from '@/lib/data';
 import { ServiceCategory } from '@/lib/types';
@@ -20,46 +20,25 @@ export default function ManageServicesPage() {
   const [services, setServices] = useState<ServiceCategory[]>([]);
   const { toast } = useToast();
 
-  const loadData = useCallback(async () => {
+  const migrateData = useCallback(async () => {
     if (!firestore) return;
-    setStatus('loading');
-    const servicesCollection = collection(firestore, 'services');
-
+    toast({
+      title: 'Setting up Services',
+      description: 'Please wait while we populate the database with initial service data.',
+    });
     try {
-      let snapshot = await getDocs(servicesCollection);
-
-      if (snapshot.empty) {
-        toast({
-          title: 'Setting up Services',
-          description: 'Please wait while we populate your database with the initial service data.',
-        });
-
-        try {
-          await Promise.all(localServiceCategories.map(category => {
-            const docId = category.id.replace(/\//g, '-');
-            const docRef = doc(firestore, 'services', docId);
-            return setDoc(docRef, { ...category, id: docId });
-          }));
-          
-          snapshot = await getDocs(servicesCollection);
-        } catch (e: any) {
-           const permissionError = new FirestorePermissionError({
-              path: 'services',
-              operation: 'create'
-           });
-           errorEmitter.emit('permission-error', permissionError);
-           setStatus('error');
-           return;
-        }
-      }
-      
-      const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
-      setServices(dbServices);
-      setStatus('complete');
-    } catch (error) {
+      const batch = writeBatch(firestore);
+      localServiceCategories.forEach(category => {
+        const docId = category.id.replace(/\//g, '-');
+        const docRef = doc(firestore, 'services', docId);
+        batch.set(docRef, { ...category, id: docId });
+      });
+      await batch.commit();
+      // The onSnapshot listener will pick up the new data automatically.
+    } catch (e: any) {
       const permissionError = new FirestorePermissionError({
-          path: 'services',
-          operation: 'list'
+        path: 'services',
+        operation: 'write'
       });
       errorEmitter.emit('permission-error', permissionError);
       setStatus('error');
@@ -67,10 +46,34 @@ export default function ManageServicesPage() {
   }, [firestore, toast]);
 
   useEffect(() => {
-    if (!isUserLoading && user && firestore) {
-      loadData();
+    if (!firestore || !user) {
+      if (!isUserLoading) setStatus('error');
+      return;
     }
-  }, [isUserLoading, user, firestore, loadData]);
+
+    setStatus('loading');
+    const servicesCollection = collection(firestore, 'services');
+    
+    const unsubscribe = onSnapshot(servicesCollection, (snapshot) => {
+      if (snapshot.empty) {
+        // Only migrate if the collection is empty.
+        migrateData();
+      } else {
+        const dbServices = snapshot.docs.map(doc => doc.data() as ServiceCategory);
+        setServices(dbServices);
+        setStatus('complete');
+      }
+    }, (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: 'services',
+        operation: 'list'
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setStatus('error');
+    });
+
+    return () => unsubscribe();
+  }, [firestore, user, isUserLoading, migrateData]);
   
   if (isUserLoading || status === 'loading') {
     return (
@@ -80,7 +83,7 @@ export default function ManageServicesPage() {
             Loading your services...
         </h2>
         <p className="text-muted-foreground max-w-md">
-          Fetching your service data from the database.
+          Fetching your service data from the database. This may include a one-time setup.
         </p>
       </div>
     );
@@ -108,5 +111,5 @@ export default function ManageServicesPage() {
     return <ManageServices initialServices={services} />;
   }
 
-  return null; // Fallback, should be handled by status states
+  return null;
 }

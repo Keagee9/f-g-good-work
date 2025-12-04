@@ -8,34 +8,20 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'admin@fgluxury.com';
     }
 
-    function isService(data) {
-      return data.id is string &&
-             data.name is string &&
-             data.image is string &&
-             data.variants is list;
-    }
-
-    function isAddon(data) {
-      return data.id is string &&
-             data.name is string &&
-             data.duration is string &&
-             data.price is number;
-    }
-
     match /bookings/{bookingId} {
       allow read, create: if true;
       allow update: if isAdmin();
       allow delete: if false;
     }
 
-    match /services/{serviceId} {
+    match /services/{document=**} {
       allow read: if true;
-      allow write: if isAdmin() && isService(request.resource.data);
+      allow write: if isAdmin();
     }
 
-    match /addons/{addonId} {
+    match /addons/{document=**} {
       allow read: if true;
-      allow write: if isAdmin() && isAddon(request.resource.data);
+      allow write: if isAdmin();
     }
 
     match /users/{userId}/{document=**} {
