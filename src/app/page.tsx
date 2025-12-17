@@ -1,19 +1,64 @@
+'use client';
 
+import { useState, useEffect } from 'react';
+import { collection, query, onSnapshot } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
+import { ServiceCategory } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { serviceCategories } from '@/lib/data';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Phone, MapPin, Clock, Instagram, Facebook } from 'lucide-react';
+import { Phone, MapPin, Clock, Instagram, Facebook, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function Home() {
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
+  const [services, setServices] = useState<ServiceCategory[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firestore) return;
+    setIsLoading(true);
+    const servicesCollection = collection(firestore, 'services');
+    const servicesQuery = query(servicesCollection);
+
+    const unsubscribe = onSnapshot(servicesQuery, 
+        (snapshot) => {
+            if (snapshot.empty) {
+                toast({
+                    variant: 'destructive',
+                    title: 'No Services Found',
+                    description: 'The services list is empty. Please contact the administrator.',
+                });
+                setServices([]);
+            } else {
+                const servicesData = snapshot.docs.map(doc => doc.data() as ServiceCategory);
+                setServices(servicesData);
+            }
+            setIsLoading(false);
+        },
+        (error) => {
+            console.error("Error fetching services:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error Loading Services',
+                description: 'Could not fetch the list of services. Please try again later.',
+            });
+            setIsLoading(false);
+        }
+    );
+
+    return () => unsubscribe();
+  }, [firestore, toast]);
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -85,29 +130,35 @@ export default function Home() {
           <p className="text-muted-foreground text-center mb-8">
             A brief overview of what we offer. Click "Book Now" to see all options.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {serviceCategories.map(category => (
-              <Card key={category.id}>
-                <CardHeader>
-                  <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      fill
-                      style={{ objectFit: 'contain' }}
-                      data-ai-hint={category.name}
-                    />
-                  </div>
-                  <CardTitle className="text-primary font-headline">{category.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm">
-                    {category.variants[0].description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {isLoading ? (
+             <div className="flex justify-center items-center h-[30vh]">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {services?.map(category => (
+                <Card key={category.id}>
+                  <CardHeader>
+                    <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        data-ai-hint={category.name}
+                      />
+                    </div>
+                    <CardTitle className="text-primary font-headline">{category.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground text-sm">
+                      {category.variants[0].description}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </section>
 
       </main>
