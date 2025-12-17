@@ -64,7 +64,7 @@ export function BookingFlowController() {
     const unsubscribeAddons = onSnapshot(addonsQuery, 
         (snapshot) => {
             if (snapshot.empty) {
-                toast({
+                 toast({
                     variant: 'destructive',
                     title: 'No Add-ons Found',
                     description: 'The add-ons list is empty. Please contact the administrator.',
