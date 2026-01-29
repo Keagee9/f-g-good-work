@@ -71,7 +71,7 @@ function EditAddonDialog({ addon, onSave }: { addon: Addon, onSave: (updatedAddo
   const onSubmit = async (data: AddonFormData) => {
     setIsSaving(true);
     try {
-      const updatedAddon: Addon = { ...data };
+      const updatedAddon: Addon = { ...data, price: Number(data.price) };
       await onSave(updatedAddon);
       toast({
         title: 'Add-on Updated',
@@ -153,7 +153,7 @@ function AddAddonDialog({ onAdd }: { onAdd: (newAddon: NewAddonFormData) => Prom
     const onSubmit = async (data: NewAddonFormData) => {
         setIsSaving(true);
         try {
-            await onAdd(data);
+            await onAdd({...data, price: Number(data.price)});
             toast({
                 title: 'Add-on Added',
                 description: `${data.name} has been added successfully.`,
@@ -231,7 +231,7 @@ export function ManageAddons({ initialAddons }: ManageAddonsProps) {
   };
 
   const handleAdd = async (newAddonData: NewAddonFormData) => {
-    const newId = crypto.randomUUID();
+    const newId = newAddonData.name.toLowerCase().replace(/\s+/g, '-');
     const newAddon: Addon = { id: newId, ...newAddonData };
     const addonDocRef = doc(db, 'addons', newId);
     await setDoc(addonDocRef, newAddon);
@@ -258,7 +258,7 @@ export function ManageAddons({ initialAddons }: ManageAddonsProps) {
   
   return (
     <div className="container py-8 md:py-12 px-4 md:px-6">
-       <header className="flex items-center justify-between mb-8">
+       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div>
                  <h1 className="text-2xl md:text-3xl font-bold font-headline text-primary">Manage Add-ons</h1>
                  <p className="text-muted-foreground">Add, edit, or delete your add-on services.</p>
@@ -271,7 +271,7 @@ export function ManageAddons({ initialAddons }: ManageAddonsProps) {
                     </Link>
                 </Button>
             </div>
-        </header>
+        </div>
 
       <Card>
         <CardHeader>
@@ -279,7 +279,7 @@ export function ManageAddons({ initialAddons }: ManageAddonsProps) {
           <CardDescription>Changes are saved live to the database.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {addons.map(addon => (
+          {addons.sort((a, b) => a.name.localeCompare(b.name)).map(addon => (
             <div key={addon.id} className="flex items-center justify-between p-4 rounded-lg border bg-card">
               <div className="flex flex-col">
                 <span className="font-semibold text-primary">{addon.name}</span>
@@ -306,7 +306,7 @@ export function ManageAddons({ initialAddons }: ManageAddonsProps) {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(addon.id)}>Delete</AlertDialogAction>
+                        <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleDelete(addon.id)}>Delete</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>

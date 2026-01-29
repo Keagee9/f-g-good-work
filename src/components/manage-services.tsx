@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ServiceCategory, ServiceVariant } from '@/lib/types';
@@ -66,7 +65,7 @@ function EditVariantDialog({ variant, categoryId, onSave }: { variant: ServiceVa
       const updatedVariant: ServiceVariant = {
         ...variant,
         name: data.name,
-        price: data.price,
+        price: Number(data.price),
       };
       await onSave(categoryId, updatedVariant);
       toast({
@@ -139,7 +138,7 @@ function EditCategoryDialog({ category, onSave }: { category: ServiceCategory, o
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
-  const methods = useForm<CategoryFormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<CategoryFormData>({
     resolver: zodResolver(CategorySchema),
     defaultValues: {
       id: category.id,
@@ -148,7 +147,7 @@ function EditCategoryDialog({ category, onSave }: { category: ServiceCategory, o
     },
   });
 
-  const { register, handleSubmit, formState: { errors } } = methods;
+  const currentImageUrl = watch('image');
 
   const onSubmit = async (data: CategoryFormData) => {
     setIsSaving(true);
@@ -193,9 +192,9 @@ function EditCategoryDialog({ category, onSave }: { category: ServiceCategory, o
             <Input id="cat-image" {...register('image')} />
             {errors.image && <p className="text-sm text-destructive">{errors.image.message}</p>}
           </div>
-           {category.image && (
+           {currentImageUrl && (
               <div className="relative w-full h-32 mt-2 rounded-md overflow-hidden border">
-                <Image src={category.image} alt={category.name} fill style={{ objectFit: 'contain' }}/>
+                <Image src={currentImageUrl} alt={category.name} fill style={{ objectFit: 'contain' }}/>
               </div>
             )}
           <DialogFooter>
